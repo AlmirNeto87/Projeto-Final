@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+
+<h1>{{ titulo }}</h1>
+
+<div class="container mt-4">
+    
+    <div class="d-flex justify-content-between mb-3">
+        {% if perfil == 'Gerente' or perfil == 'Administrador de Segurança' %}
+            <a href="{{ url_for('cadastrar_equipamento') }}" class="btn btn-success">Criar Equipamento</a>
+        {% endif %}
+    </div>
+
+    <div class="text-center">
+        <table class="table table-bordered mx-auto" style="width: 90%;">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Situação</th> 
+                    <th>Quantidade</th>
+                    <th>Data de Vencimento</th>
+                    <th>Descrição</th>
+                    <th>Nível de Perigo</th>
+                    <th colspan="2" class="text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for equipamento in equipamentos %}
+                <tr>
+                    <td>{{ equipamento.id }}</td>
+                    <td>{{ equipamento.nome }}</td>
+                    <td>{{ equipamento.situacao }}</td> 
+                    <td>{{ equipamento.quantidade }}</td>
+                    <td>{{ equipamento.data_vencimento.strftime("%d/%m/%Y") if equipamento.data_vencimento else "-" }}</td>
+                    <td>{{ equipamento.descricao or "-" }}</td>
+                    <td>{{ equipamento.nivel_perigo }}</td>
+                    <td>
+                        {% if perfil == 'Administrador de Segurança' %}
+                            <a class="btn btn-primary btn-sm" href="{{ url_for('editar_equipamento', id=equipamento.id) }}">Editar</a>
+                            <a class="btn btn-danger btn-sm" href="{{ url_for('deletar_equipamento', id=equipamento.id) }}">Deletar</a>
+                        {% else %}
+                            <span class="text-muted">Sem Permissão</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center"> Nenhum equipamento encontrado!</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

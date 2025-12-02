@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+
+
+
+    <div>
+        <h1>Contatos</h1>
+        
+                   
+    </div>
+
+    <section>
+        <h2>Entre em Contato Conosco</h2>
+        <p>Se você tiver alguma dúvida ou precisar de mais informações, não hesite em nos contactar. Estamos à disposição para atendê-lo!</p>
+
+        <h3>Formas de contato:</h3>
+        <ul>
+            <li><strong>Email:</strong> contato@minhaempresa.com.br</li>
+            <li><strong>Telefone:</strong> (85) 1234-5678</li>
+            <li><strong>Endereço:</strong> Rua Exemplo, 123 - Fortaleza, CE</li>
+        </ul>
+
+        <h3>Formulário de Contato:</h3>
+        <form action="/enviar-mensagem" method="POST">
+            <label for="nome">Nome:</label>
+            <input type="text" id="nome" name="nome" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="mensagem">Mensagem:</label>
+            <textarea id="mensagem" name="mensagem" rows="4" required></textarea>
+
+            <button type="submit">Enviar</button>
+        </form>
+    </section>
+
+    
+{% endblock %}

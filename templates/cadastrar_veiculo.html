@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+
+<h1>{{ titulo }}</h1>
+
+<div class="container mt-5">
+    <div class="jumbotron text-center">
+        <h1 class="display-4">Cadastro de Veículos</h1>
+
+        <form method="POST" class="mb-3">
+
+            <div class="mb-3">
+                <label class="form-label">Modelo</label>
+                <input type="text" name="modelo" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Marca</label>
+                <input type="text" name="marca" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Ano de Fabricação</label>
+                <input type="number" name="ano_fabricacao" class="form-control" min="1900" max="{{ current_year }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Cor</label>
+                <input type="text" name="cor" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Descrição</label>
+                <textarea name="descricao" class="form-control" rows="3" placeholder="Detalhe o veículo..."></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Local de Armazenamento</label>
+                <input type="text" name="local_armazenamento" class="form-control" required>
+            </div>
+         
+            <div class="mb-3">
+                <label class="form-label">Placa</label>
+                <input type="text" name="placa" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Situação</label>
+                <select name="situacao" class="form-select" required>
+                    <option value="">Selecione a situação...</option>
+                    <option value="Ativo">Ativo</option>
+                    <option value="Manutencao">Manutenção</option>
+                    <option value="Defeituoso">Defeituoso</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Cadastrar</button>
+            <a class="btn btn-secondary" href="{{ url_for('listar_veiculos') }}">Voltar</a>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

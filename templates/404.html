@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+
+<h1>{{ titulo }}</h1>
+    <div>
+        <h1>Oops! Algo deu errado. {{error_code}} {{error_message}} </h1>
+        
+                  
+    </div>
+
+    <section>
+        <h2>Desculpe, não conseguimos encontrar a página que você está procurando.</h2>
+        <p>É possível que o link tenha sido digitado incorretamente ou que a página tenha sido removida.</p>
+        <p>Tente voltar para a <a href="{{ url_for('home') }}">página inicial</a> ou use o menu acima para navegar.</p>
+    </section>
+
+
+{% endblock%}

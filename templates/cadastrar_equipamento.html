@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+
+<h1>{{ titulo }}</h1>
+
+<div class="container mt-5">
+    <div class="jumbotron text-center">
+        <h1 class="display-4">Página para cadastro de equipamentos</h1>
+
+        <form method="POST" class="mb-3">
+
+            <div class="mb-3">
+                <label class="form-label">Nome</label>
+                <input type="text" name="nome" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Quantidade</label>
+                <input type="number" name="quantidade" class="form-control" min="1" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Data de Vencimento</label>
+                <input type="date" name="data_vencimento" class="form-control" >
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Situação</label>
+                <select name="situacao" class="form-select" required>
+                    <option value="">Selecione a situação...</option>
+                    {% for sit in situacoes %}
+                    <option value="{{ sit }}" {% if sit == 'Ativo' %}selected{% endif %}>{{ sit }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Descrição</label>
+                <textarea name="descricao" class="form-control" rows="3" placeholder="Detalhe o equipamento..."></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Nível de Perigo</label>
+                <select name="nivel_perigo" class="form-select" required>
+                    <option value="">Selecione...</option>
+                    <option value="Baixo">Baixo</option>
+                    <option value="Médio">Médio</option>
+                    <option value="Alto">Alto</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Cadastrar</button>
+            <a class="btn btn-secondary" href="{{ url_for('listar_equipamentos') }}">Voltar</a>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

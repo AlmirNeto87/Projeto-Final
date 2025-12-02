@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+<h1>{{ titulo }}</h1>
+
+<div class="container mt-4">
+
+    <form method="POST" class="flex-grow-1">
+        <div class="mb-3">
+            <label class="form-label">Nome</label>
+            <input type="text" name="nome" value="{{ equipamento.nome }}" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Quantidade</label>
+            <input type="number" name="quantidade" value="{{ equipamento.quantidade }}" class="form-control" min="1" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Data de Vencimento</label>
+            <input type="date" name="data_vencimento" value="{{ equipamento.data_vencimento.strftime('%Y-%m-%d') if equipamento.data_vencimento else '' }}" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Situação</label>
+            <select name="situacao" class="form-select" required>
+                {% for sit in situacoes %}
+                <option value="{{ sit }}" {% if equipamento.situacao == sit %}selected{% endif %}>{{ sit }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Descrição</label>
+            <textarea name="descricao" class="form-control" rows="3">{{ equipamento.descricao }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Nível de Perigo</label>
+            <select name="nivel_perigo" class="form-select" required>
+                <option value="Baixo" {% if equipamento.nivel_perigo == 'Baixo' %}selected{% endif %}>Baixo</option>
+                <option value="Médio" {% if equipamento.nivel_perigo == 'Médio' %}selected{% endif %}>Médio</option>
+                <option value="Alto" {% if equipamento.nivel_perigo == 'Alto' %}selected{% endif %}>Alto</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <a class="btn btn-secondary" href="{{ url_for('listar_equipamentos') }}">Voltar</a>
+    </form>
+
+</div>
+{% endblock %}

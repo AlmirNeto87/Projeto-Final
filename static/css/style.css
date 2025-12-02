@@ -1,0 +1,153 @@
+/* style.css */
+
+/* Corpo da página com fundo preto e texto branco */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #000; /* Fundo preto */
+    color: white; /* Texto branco */
+    text-shadow: 2px 2px 4px #b30000; /* Sombras vermelhas nos textos */
+}
+
+/* Cabeçalho com fundo escuro e texto branco */
+header {
+    background-color: #333; /* Fundo escuro */
+    color: white;
+    padding: 10px;
+    text-align: center;
+    text-shadow: 2px 2px 4px #b30000; /* Sombras vermelhas */
+}
+
+/* Navegação do cabeçalho */
+header nav ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+header nav ul li {
+    display: inline;
+    margin: 0 10px;
+}
+
+header nav ul li a {
+    color: white;
+    text-decoration: none;
+    text-shadow: 1px 1px 3px #b30000; /* Sombras vermelhas nos links */
+}
+
+header nav ul li a:hover {
+    color: #ff6666; /* Cor de destaque ao passar o mouse */
+}
+
+/* Seções com fundo branco e borda suave */
+section {
+    padding: 20px;
+    background-color: #1a1a1a; /* Fundo cinza escuro */
+    margin: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-shadow: 1px 1px 3px #b30000; /* Sombras vermelhas */
+}
+
+section h2 {
+    font-size: 1.8em;
+    margin-bottom: 10px;
+    color: white;
+}
+
+section p {
+    font-size: 1.1em;
+    color: white; /* Texto branco nas seções */
+}
+
+/* Cartões de serviço com fundo mais claro */
+.service-card {
+    background-color: #333; /* Fundo escuro para os cartões */
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-shadow: 1px 1px 3px #b30000; /* Sombras vermelhas */
+}
+
+.service-card h3 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.service-card p {
+    font-size: 1em;
+    color: white;
+}
+
+/* Chamada para ação (CTA) */
+#cta {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 30px;
+    border-radius: 8px;
+    text-shadow: 2px 2px 4px #b30000; /* Sombras vermelhas */
+}
+
+/* Botão da chamada para ação */
+.cta-button {
+    background-color: #555;
+    color: white;
+    padding: 15px 25px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 1.2em;
+    text-shadow: 1px 1px 3px #b30000; /* Sombras vermelhas */
+}
+
+.cta-button:hover {
+    background-color: #777;
+}
+
+/* Rodapé fixo */
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    text-shadow: 1px 1px 3px #b30000; /* Sombras vermelhas */
+}
+
+/* Estilo específico para a página de erro */
+#error {
+    text-align: center;
+    padding: 20px;
+    background-color: #ffcccc;
+    border: 1px solid #ff6666;
+    border-radius: 8px;
+    margin: 50px auto;
+    width: 80%;
+    max-width: 600px;
+    text-shadow: 2px 2px 4px #b30000; /* Sombras vermelhas */
+}
+
+#error h2 {
+    font-size: 2em;
+    color: #b30000;
+    text-shadow: 2px 2px 4px #ff0000; /* Sombras vermelhas */
+}
+
+#error p {
+    font-size: 1.2em;
+    color: #333;
+}
+
+#error a {
+    color: #0056b3;
+    text-decoration: none;
+}
+
+#error a:hover {
+    text-decoration: underline;
+}

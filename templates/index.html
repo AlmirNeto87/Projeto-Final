@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<div class="container mt-5">
+    <div class="jumbotron text-center">
+        <h1 class="display-4">{{ titulo }}</h1>
+        <p class="lead">Bem-vindo ao Sistema de gerenciamento da Empresa Wayne</p>
+        <p class="lead">Somos uma empresa dedicada a oferecer soluções inovadoras para nossos clientes, com um compromisso sério com a qualidade e o atendimento personalizado.</p>
+        <p class="lead">Explore nosso site e descubra mais sobre os nossos serviços e como podemos ajudar o seu negócio a crescer.</p>
+        <hr>
+
+        <!-- 🔗 Links para as páginas principais -->
+        <div class="mt-4 d-flex justify-content-center gap-3 flex-wrap">
+            
+            <!-- Links Condicionais com base no perfil do usuário -->
+            {% if perfil == 'Funcionário' %}
+                <!-- Somente Equipamentos -->
+                <a href="{{ url_for('listar_equipamentos') }}" class="btn btn-warning btn-lg text-white">
+                    ⚙️ Gerenciar Equipamentos
+                </a>
+            {% elif perfil == 'Gerente' %}
+                <!-- Equipamentos e Veículos -->
+                <a href="{{ url_for('listar_equipamentos') }}" class="btn btn-warning btn-lg text-white">
+                    ⚙️ Gerenciar Equipamentos
+                </a>
+                <a href="{{ url_for('listar_veiculos') }}" class="btn btn-primary btn-lg">
+                    🚗 Gerenciar Veículos
+                </a>
+            {% elif perfil == 'Administrador de Segurança' %}
+                <!-- Todos os links: Usuários, Equipamentos e Veículos -->
+                <a href="{{ url_for('listar_usuarios') }}" class="btn btn-success btn-lg">
+                    👤 Gerenciar Usuários
+                </a>
+                <a href="{{ url_for('listar_equipamentos') }}" class="btn btn-warning btn-lg text-white">
+                    ⚙️ Gerenciar Equipamentos
+                </a>
+                <a href="{{ url_for('listar_veiculos') }}" class="btn btn-primary btn-lg">
+                    🚗 Gerenciar Veículos
+                </a>
+                <a href="{{ url_for('buscar_adm') }}" class="btn btn-primary btn-lg">
+                     Buscador
+                </a>
+
+
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+<h1>{{ titulo }}</h1>
+
+<div class="d-flex align-items-start gap-4">
+
+    <form method="POST" enctype="multipart/form-data" class="flex-grow-1">
+        <div class="mb-3">
+            <label class="form-label">Nome</label>
+            <input type="text" name="name" value="{{ usuario.name }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" value="{{ usuario.email }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Senha</label>
+            <input type="password" name="password" class="form-control" required>
+        </div>
+        
+        <!-- Novo Campo Perfil -->
+        <div class="mb-3">
+            <label class="form-label">Perfil</label>
+            <select name="perfil" class="form-select" required>
+                <option value="admin" {% if usuario.perfil == 'admin' %}selected{% endif %}>Admin</option>
+                <option value="usuario" {% if usuario.perfil == 'usuario' %}selected{% endif %}>Usuário</option>
+                <option value="gerente" {% if usuario.perfil == 'gerente' %}selected{% endif %}>Gerente</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <a class="btn btn-secondary" href="{{ url_for('listar_usuarios') }}">Voltar</a>
+    </form>
+</div>
+{% endblock %}

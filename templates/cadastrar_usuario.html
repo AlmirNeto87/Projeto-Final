@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+
+<h1>{{ titulo }}</h1>
+
+<div class="container mt-5">
+    <div class="jumbotron text-center">
+        <h1 class="display-4">Página para cadastro de usuários</h1>
+
+        <form method="POST" class="mb-3" enctype="multipart/form-data">
+            
+            <div class="mb-3">
+                <label class="form-label">Nome</label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Senha</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Perfil</label>
+                <select name="perfil" class="form-control" required>
+                    <option value="">-- Selecione um perfil --</option>
+                    <option value="FUNCIONARIO">Funcionário</option>
+                    <option value="GERENTE">Gerente</option>
+                    <option value="ADMIN_SEGURANCA">Administrador de Segurança</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Criar</button>
+            <a class="btn btn-secondary" href="{{ url_for('listar_usuarios') }}">Voltar</a>
+        
+        </form>
+    </div>
+</div>
+
+{% endblock %}

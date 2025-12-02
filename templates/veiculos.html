@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+
+<h1>{{ titulo }}</h1>
+
+<div class="container mt-4">
+    
+    <div class="d-flex justify-content-between mb-3">
+        {% if perfil == 'Gerente' or perfil == 'Administrador de Segurança' %}
+            <a href="{{ url_for('cadastrar_veiculo') }}" class="btn btn-success">Cadastrar Veículo</a>
+        {% endif %}
+        </div>
+
+    <div class="text-center">
+        <table class="table table-bordered mx-auto" style="width: 90%;">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Modelo</th>
+                    <th>Marca</th>
+                    <th>Ano de Fabricação</th>
+                    <th>Cor</th>
+                    <th>Local de Armazenamento</th>
+                    <th>Placa</th> 
+                    <th>Situação</th>
+                    <th>Descrição</th>
+                    <th colspan="2" class="text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for veiculo in veiculos %}
+                <tr>
+                    <td>{{ veiculo.id }}</td>
+                    <td>{{ veiculo.modelo }}</td>
+                    <td>{{ veiculo.marca }}</td>
+                    <td>{{ veiculo.ano_fabricacao }}</td>
+                    <td>{{ veiculo.cor }}</td>
+                    <td>{{ veiculo.local_armazenamento }}</td>
+                    <td>{{ veiculo.placa }}</td> 
+                    <td>{{ veiculo.situacao }}</td>
+                    <td>{{ veiculo.descricao or "-" }}</td>
+                    <td>
+                        {% if perfil != 'Gerente' %}
+                            <a class="btn btn-primary btn-sm" href="{{ url_for('editar_veiculo', id=veiculo.id) }}">Editar</a>
+                            <a class="btn btn-danger btn-sm" href="{{ url_for('deletar_veiculo', id=veiculo.id) }}">Deletar</a>
+                        {% else %}
+                            <span class="text-muted">Sem Permissão</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" class="text-center"> Nenhum veículo encontrado!</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

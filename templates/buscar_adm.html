@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+
+<h1>{{ titulo }}</h1>
+
+<div class="container mt-4">
+
+    {# ---------------------------------------------------------------------- #}
+    {# 1. FORMULÁRIO DE FILTROS DE BUSCA (GET) #}
+    {# ---------------------------------------------------------------------- #}
+    <form method="GET" action="{{ url_for('buscar_adm') }}" class="mb-5 p-4 border rounded shadow-sm">
+        <h3>Filtros de Busca Avançada</h3>
+
+        <div class="row g-3">
+            
+            {# Busca Geral por Nome #}
+            <div class="col-md-5">
+                <label for="termo_busca" class="form-label">Buscar por Nome / Palavra-chave</label>
+                <input type="text" name="termo_busca" id="termo_busca" class="form-control" 
+                       value="{{ termo_busca or '' }}" placeholder="Nome do Usuário, Veículo ou Equipamento">
+            </div>
+
+            {# Filtro Principal: Tipo de Recurso #}
+            <div class="col-md-3">
+                <label for="tipo" class="form-label">Tipo de Recurso</label>
+                <select name="tipo" id="tipo" class="form-select" onchange="this.form.submit()">
+                    <option value="Todos" {% if tipo == 'Todos' %}selected{% endif %}>Todos</option>
+                    {% for op in tipo_opcoes %}
+                        <option value="{{ op }}" {% if tipo == op %}selected{% endif %}>{{ op }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+        </div>
+        
+        <hr class="my-4">
+
+        <h4>Filtros Específicos (Ajustados pelo Tipo)</h4>
+
+        <div class="row g-3">
+            
+            {# --- Filtro Específico para USUÁRIO: Perfil --- #}
+            {% if tipo == 'Usuário' or tipo == 'Todos' %}
+                <div class="col-md-4">
+                    <label for="perfil" class="form-label">Usuário: Perfil de Acesso</label>
+                    <select name="perfil" id="perfil" class="form-select">
+                        <option value="" {% if not perfil %}selected{% endif %}>Todos os Perfis</option>
+                        {% for op in tipos_perfil %}
+                            <option value="{{ op }}" {% if perfil == op %}selected{% endif %}>{{ op }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
+
+            {# --- Filtros Específicos para VEÍCULO: Status e Local --- #}
+            {% if tipo == 'Veículo' or tipo == 'Todos' %}
+                <div class="col-md-4">
+                    <label for="status_veiculo" class="form-label">Veículo: Status</label>
+                    <select name="status_veiculo" id="status_veiculo" class="form-select">
+                        <option value="" {% if not status_veiculo %}selected{% endif %}>Qualquer Status</option>
+                        {% for op in status_veiculo_opcoes %}
+                            <option value="{{ op }}" {% if status_veiculo == op %}selected{% endif %}>{{ op }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="local_veiculo" class="form-label">Veículo: Local de Armazenamento</label>
+                    <input type="text" name="local_veiculo" id="local_veiculo" class="form-control" 
+                           value="{{ local_veiculo or '' }}" placeholder="Ex: Garagem Principal">
+                </div>
+            {% endif %}
+
+            {# --- Filtro Específico para EQUIPAMENTO: Nível de Perigo --- #}
+            {% if tipo == 'Equipamento' or tipo == 'Todos' %}
+                <div class="col-md-4">
+                    <label for="nivel_perigo" class="form-label">Equipamento: Nível de Perigo</label>
+                    <select name="nivel_perigo" id="nivel_perigo" class="form-select">
+                        <option value="" {% if not nivel_perigo %}selected{% endif %}>Qualquer Nível</option>
+                        {% for op in niveis_perigo_opcoes %}
+                            <option value="{{ op }}" {% if nivel_perigo == op %}selected{% endif %}>{{ op }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
+
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-success"><i class="bi bi-search"></i> Aplicar Busca e Filtros</button>
+            <a href="{{ url_for('buscar_adm') }}" class="btn btn-secondary">Limpar Filtros</a>
+        </div>
+    </form>
+
+    {# ---------------------------------------------------------------------- #}
+    {# 2. EXIBIÇÃO DOS RESULTADOS #}
+    {# ---------------------------------------------------------------------- #}
+
+    {% if request.args %}
+        {% set total_resultados = resultados.usuarios|length + resultados.veiculos|length + resultados.equipamentos|length %}
+        
+        {% if total_resultados > 0 %}
+            <h2>Resultados Encontrados ({{ total_resultados }})</h2>
+        {% endif %}
+        
+        
+        {# Exibição de Usuários #}
+        {% if tipo == 'Usuário' or tipo == 'Todos' %}
+            <div class="mt-4">
+                <h3 class="text-info">Usuários ({{ resultados.usuarios|length }})</h3>
+                {% if resultados.usuarios %}
+                    <table class="table table-sm table-striped table-hover shadow-sm">
+                        <thead class="table-info">
+                            <tr><th>Nome</th><th>Email</th><th>Perfil</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for item in resultados.usuarios %}
+                            <tr>
+                                <td>{{ item.name }}</td> 
+                                <td>{{ item.email }}</td>
+                                <td><span class="badge bg-primary">{{ item.perfil.value }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="alert alert-light">Nenhum usuário encontrado com os filtros selecionados.</p>
+                {% endif %}
+            </div>
+            <hr>
+        {% endif %}
+
+        
+        {# Exibição de Veículos #}
+        {% if tipo == 'Veículo' or tipo == 'Todos' %}
+            <div class="mt-4">
+                <h3 class="text-success">Veículos ({{ resultados.veiculos|length }})</h3>
+                {% if resultados.veiculos %}
+                    <table class="table table-sm table-striped table-hover shadow-sm">
+                        <thead class="table-success">
+                            <tr><th>Nome/Modelo</th><th>Marca</th><th>Placa</th><th>Local</th><th>Situação</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for item in resultados.veiculos %}
+                            <tr>
+                                <td>{{ item.nome or item.modelo }}</td> {# Exibir nome ou modelo #}
+                                <td>{{ item.marca }}</td>
+                                <td>{{ item.placa }}</td>
+                                <td>{{ item.local_armazenamento }}</td>
+                                <td><span class="badge bg-{{ 'success' if item.situacao == 'Ativo' else 'warning' }}">{{ item.situacao }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="alert alert-light">Nenhum veículo encontrado com os filtros selecionados.</p>
+                {% endif %}
+            </div>
+            <hr>
+        {% endif %}
+        
+        {# Exibição de Equipamentos #}
+        {% if tipo == 'Equipamento' or tipo == 'Todos' %}
+            <div class="mt-4">
+                <h3 class="text-danger">Equipamentos ({{ resultados.equipamentos|length }})</h3>
+                {% if resultados.equipamentos %}
+                    <table class="table table-sm table-striped table-hover shadow-sm">
+                        <thead class="table-danger">
+                            <tr><th>Nome</th><th>Quantidade</th><th>Nível Perigo</th><th>Situação</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for item in resultados.equipamentos %}
+                            <tr>
+                                <td>{{ item.nome }}</td>
+                                <td>{{ item.quantidade }}</td>
+                                <td><span class="badge bg-{{ 'danger' if item.nivel_perigo == 'Alto' else 'warning' if item.nivel_perigo == 'Médio' else 'success' }}">{{ item.nivel_perigo }}</span></td>
+                                <td>{{ item.situacao }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="alert alert-light">Nenhum equipamento encontrado com os filtros selecionados.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        
+        {# Mensagem de Nenhum Resultado #}
+        {% if total_resultados == 0 %}
+            <div class="alert alert-warning" role="alert">
+                Não foram encontrados recursos para os critérios de busca e filtros selecionados.
+            </div>
+        {% endif %}
+
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            Use os filtros acima para iniciar sua busca administrativa.
+        </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}

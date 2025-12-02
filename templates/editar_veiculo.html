@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+<h1>{{ titulo }}</h1>
+
+<div class="container mt-4">
+
+    <form method="POST" class="flex-grow-1">
+        <!-- Modelo -->
+        <div class="mb-3">
+            <label class="form-label">Modelo</label>
+            <input type="text" name="modelo" value="{{ veiculo.modelo }}" class="form-control" required>
+        </div>
+
+        <!-- Marca -->
+        <div class="mb-3">
+            <label class="form-label">Marca</label>
+            <input type="text" name="marca" value="{{ veiculo.marca }}" class="form-control" required>
+        </div>
+
+        <!-- Ano de Fabricação -->
+        <div class="mb-3">
+            <label class="form-label">Ano de Fabricação</label>
+            <input type="number" name="ano_fabricacao" value="{{ veiculo.ano_fabricacao }}" class="form-control" min="1900" max="{{ current_year }}" required>
+        </div>
+
+        <!-- Cor -->
+        <div class="mb-3">
+            <label class="form-label">Cor</label>
+            <input type="text" name="cor" value="{{ veiculo.cor }}" class="form-control" required>
+        </div>
+
+        <!-- Descrição -->
+        <div class="mb-3">
+            <label class="form-label">Descrição</label>
+            <textarea name="descricao" class="form-control" rows="3">{{ veiculo.descricao }}</textarea>
+        </div>
+
+        <!-- Local de Armazenamento -->
+        <div class="mb-3">
+            <label class="form-label">Local de Armazenamento</label>
+            <input type="text" name="local_armazenamento" value="{{ veiculo.local_armazenamento }}" class="form-control" required>
+        </div>
+
+        <!-- Placa -->
+        <div class="mb-3">
+            <label class="form-label">Placa</label>
+            <input type="text" name="placa" value="{{ veiculo.placa }}" class="form-control" required>
+        </div>
+
+        <!-- Situação -->
+        <div class="mb-3">
+            <label class="form-label">Situação</label>
+            <select name="situacao" class="form-select" required>
+                <option value="Ativo" {% if veiculo.situacao == 'Ativo' %}selected{% endif %}>Ativo</option>
+                <option value="Manutencao" {% if veiculo.situacao == 'Manutencao' %}selected{% endif %}>Manutenção</option>
+                <option value="Defeituoso" {% if veiculo.situacao == 'Defeituoso' %}selected{% endif %}>Defeituoso</option>
+            </select>
+        </div>
+
+        <!-- Botões -->
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <a class="btn btn-secondary" href="{{ url_for('listar_veiculos') }}">Voltar</a>
+    </form>
+
+</div>
+
+{% endblock %}
