@@ -19,3 +19,6 @@ __pycache__/
 # Configurações de IDE
 .vscode/
 .idea/
+
+# Arquivos Rar
+*.rar
