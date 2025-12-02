@@ -1,116 +1,177 @@
-# 🐍 Super Módulo Flask - Aula 03  
+# 🦇 Sistema WayneCorp – Plataforma de Gerenciamento  
+**Aplicação Flask completa com Dashboard, Logs, CRUDs, Autenticação, Exportação e Interface Responsiva**
 
-Bem-vindo ao **Super Módulo Flask Aula 03**, um projeto em Python utilizando a biblioteca Flask.  
-Nesta etapa, avançamos bastante em relação à Aula 02:  
-organizamos o projeto em uma estrutura mais **profissional e escalável**, separamos os controladores , implementamos **login com sessão** e aplicamos o **Bootstrap** em todas as páginas HTML para uma interface moderna e responsiva.  
+Este projeto é um sistema profissional desenvolvido em **Flask**, com uma estrutura organizada em **camadas**, uso avançado de **Blueprints**, autenticação com perfis, página de **Dashboard com gráficos**, **sistema de logs detalhados**, exportação CSV/JSON, cards responsivos e muito mais.
 
-Projeto baseado na 3ª Aula do Prof. Robson – creditado mais abaixo no texto.  
-
----
-
-## 📚 Conteúdo da Aula  
-
-### Revisão da Aula Anterior  
-- CRUD de Produtos completo.  
-- CRUD de Usuários completo.  
-- Login básico com sessão.  
-- Integração inicial do Bootstrap.  
-
-### Organização do Projeto  
-- Estrutura em **camadas** para deixar o código mais limpo:  
-  - `controllers/` → lógica das rotas separada em Blueprints.  
-  - `models/` → modelos de dados e futuras integrações com banco.  
-  - `templates/` → páginas HTML organizadas em pastas.  
-  - `app.py` → ponto central de inicialização do projeto.  
-
-
-### Login e Sessão (refinado)  
-- Proteção de rotas com decorador `@login_obrigatorio`.  
-- Barra de navegação exibida apenas quando o usuário está logado.  
-- Logout remove os dados da sessão de forma segura.  
-
-### Bootstrap aplicado em toda a aplicação  
-- Layout responsivo em todas as páginas.  
-- Barra de navegação estilizada.  
-- Formulários e tabelas organizados.  
+Inspirado e expandido a partir das aulas do Prof. Robson – Infinity School.
 
 ---
 
-## 🚀 Tecnologias Utilizadas  
-- Python 3.x  
-- Flask  
-- HTML/CSS  
-- Bootstrap (via CDN)  
+# 📌 Funcionalidades Principais
+
+## 🔐 Autenticação e Perfis de Usuário
+✔ Login com sessão  
+✔ Logout seguro  
+✔ Perfis com permissões:
+
+- **Funcionário** → Equipamentos  
+- **Gerente** → Equipamentos + Veículos  
+- **Administrador de Segurança** → Todos os módulos + Logs + Dashboard  
+
+✔ Rotas protegidas com:
+- `@login_obrigatorio`
+- `@perfil_obrigatorio(...)`
 
 ---
 
-## ▶️ Como Executar o Projeto  
+## 📊 Dashboard Inteligente
+Página dedicada a análise de dados, com:
 
-Clone este repositório:  
+### **Gráficos**
+- Quantidade por tipo (usuários, veículos, equipamentos)
+- Gráficos dinâmicos filtráveis
+- Renderização baseada no card selecionado
+
+### **Tabelas Dinâmicas**
+- Listagem recente
+- Visão geral filtrável
+
+---
+
+## 📝 Sistema de Logs Completo
+Tudo o que acontece no sistema é registrado:
+
+✔ Usuário responsável  
+✔ Tipo de operação  
+✔ Modelo afetado  
+✔ Descrição  
+✔ Data e hora com timezone  
+✔ Modificações (JSON)
+
+### **Filtros**
+- Usuário  
+- Operação  
+- Intervalo de datas  
+
+### **Exportação**
+- **CSV**  
+- **JSON**
+
+---
+
+## 📦 CRUDs Completos
+- Usuários  
+- Equipamentos  
+- Veículos  
+
+Cada módulo inclui:
+✔ Listagem  
+✔ Cadastro  
+✔ Edição  
+✔ Exclusão  
+✔ Logs automáticos
+
+---
+
+# 🧱 Estrutura do Projeto
+    /controllers
+    auth_controller.py
+    usuario_controller.py
+    veiculo_controller.py
+    equipamento_controller.py
+    log_controller.py
+    dashboard_controller.py
+
+    /models
+    usuario_model.py
+    veiculo_model.py
+    equipamento_model.py
+    log_model.py
+
+    /templates
+    base.html
+    index.html
+    dashboard.html
+    logs.html
+    ...
+
+    /static
+    /js
+    /css
+
+    /utils
+    decorators.py
+
+    config.py
+    app.py
+    README.md
+
+
+---
+
+# 🚀 Tecnologias Utilizadas
+
+### **Backend**
+- Python 3.x
+- Flask
+- Flask SQLAlchemy
+- Blueprints
+- Manipulação JSON e CSV
+
+### **Frontend**
+- HTML5
+- Bootstrap 5 (CDN)
+- Chart.js
+- Cards responsivos
+- Navbar com menu hambúrguer
+
+### **Banco de Dados**
+- SQLite (padrão)
+- Suporte simples para MySQL/PostgreSQL
+
+---
+
+# ▶️ Como Executar o Projeto
+
+## 1️⃣ Clonar o repositório
+ ```bash
+    git clone https://github.com/seu-usuario/wayncorp-flask.git
+    cd wayncorp-flask
+ ```
+## 2️⃣ Criar ambiente virtual (opcional, recomendado)
 ```bash
-git clone https://github.com/seu-usuario/super-modulo-flask-aula03.git
-cd super-modulo-flask-aula03
+    python -m venv venv
 ```
-
-Crie um ambiente virtual (opcional, mas recomendado):  
+ Ativar Windows
 ```bash
-python -m venv venv
-source venv/bin/activate   # Linux/Mac
-venv\Scripts\activate      # Windows
+   venv\Scripts\activate
 ```
-
-Instale as dependências:  
+## 3️⃣ Instalar dependências
 ```bash
-pip install flask
-pip install flask_sqlalchemy
+    pip install flask flask_sqlalchemy
 ```
-
-Execute a aplicação:  
+## 4️⃣ Executar o servidor
 ```bash
-python app.py
+   python app.py
 ```
+## 5️⃣ Acessar no navegador
+👉 http://127.0.0.1:5000
 
-Abra no navegador:  
-[http://127.0.0.1:5000](http://127.0.0.1:5000)  
+# 🖼 Interface e Navegação
+    ✔ Navbar Responsiva
+        Ícone hambúrguer para mobile
+        Links exibidos de acordo com o perfil do usuário
+    ✔ Página Inicial com Cards Responsivos
+        Design moderno e padronizado com:
+        Usuários
+        Veículos
+        Equipamentos
+        Logs
+        Dashboard
 
----
+#   🔒 Segurança
+         Sessões protegidas
+        Permissões por perfil
+        Logs completos (incluindo acessos negados)
+        Rotas críticas protegidas por decoradores
 
-## 🎨 Como usar o Bootstrap via CDN  
-
-Para adicionar o Bootstrap às páginas HTML, insira o link CDN dentro da tag `<head>` do seu arquivo:  
-
-```html
-<head>
-    <meta charset="UTF-8">
-    <title>Minha Página Flask</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container">
-        <h1 class="text-center">Minha Página com Bootstrap</h1>
-    </div>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-```
-
-💡 Com isso, todas as suas páginas Flask podem aproveitar a máxima responsividade e estilo do Bootstrap.  
-
----
-
-## 🔒 Funcionalidades de Login e Sessão  
-
-- O login é a primeira rota antes de acessar a aplicação.  
-- Usuário logado permanece ativo enquanto a sessão existir.  
-- Logout encerra a sessão e protege as rotas `/produtos` e `/usuarios`.  
-- A barra de navegação só aparece quando o usuário está autenticado.  
-- Todas as rotas críticas agora estão protegidas com `@login_obrigatorio`.  
-
----
-
-## 👨‍🏫 Créditos  
-
-Projeto desenvolvido a partir da aula do **Prof. Robson – Escola Infinity Fortaleza/CE**  
-👉 GitHub do Prof. Robson: [https://github.com/robson400](https://github.com/robson400)  

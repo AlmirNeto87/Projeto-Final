@@ -1,0 +1,72 @@
+/* ======= ESTILOS GERAIS ======= */
+body {
+    background-color: #3D3838;   /* Fundo do site */
+    color: white;              /* Texto geral cinza premium */
+    background-image: none;      /* Remove imagem de fundo */
+}
+
+
+
+/* ======= NAVBAR ======= */
+.navbar {
+    background-color: #3D3838 !important;
+}
+
+.navbar .nav-link,
+.navbar .navbar-brand {
+    color: red !important;   /* Texto vermelho (como você pediu) */
+    font-weight: bold;
+}
+
+.navbar .nav-link:hover {
+    color: #ff6666 !important;
+}
+
+/* ======= CONTEÚDO ======= */
+.container {
+    background: rgba(0, 0, 0, 0.22);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+/* ======= FOOTER ======= */
+.footer-logo {
+    width: 120px;
+    height: auto;
+    filter: brightness(0) invert(1); /* mantém a logo branca */
+}
+
+/* ======= TABELAS DARK ======= */
+table.table {
+    background-color: #3D3838 !important;
+    border-color: #555 !important;
+}
+
+/* Células */
+table.table td,
+table.table th {
+    background-color: #3D3838 !important;
+    color: #E0E0E0 !important;
+    border-color: #555 !important;
+}
+
+/* Cabeçalho */
+table.table thead th {
+    background-color: #4A4545 !important;
+    color: #CFE8FF !important; /* Azul clarinho */
+    font-weight: bold;
+}
+
+/* Linhas alternadas */
+table.table tbody tr:nth-child(odd) {
+    background-color: #3D3838 !important;
+}
+
+table.table tbody tr:nth-child(even) {
+    background-color: #4A4545 !important;
+}
+
+/* Hover */
+table.table tbody tr:hover {
+    background-color: #5A5555 !important;
+}

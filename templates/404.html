@@ -2,17 +2,34 @@
 {% block conteudo %}
 
 <h1>{{ titulo }}</h1>
-    <div>
-        <h1>Oops! Algo deu errado. {{error_code}} {{error_message}} </h1>
-        
-                  
-    </div>
 
-    <section>
-        <h2>Desculpe, não conseguimos encontrar a página que você está procurando.</h2>
-        <p>É possível que o link tenha sido digitado incorretamente ou que a página tenha sido removida.</p>
-        <p>Tente voltar para a <a href="{{ url_for('home') }}">página inicial</a> ou use o menu acima para navegar.</p>
-    </section>
+<div>
+    <h1>Oops! Algo deu errado.</h1>
 
+    {% if perfil_usuario == "Administrador de Segurança" %}
+        <!-- Detalhes completos para o ADMIN SEGURANÇA -->
+        <h3>Erro {{ error_code }} – {{ error_message }}</h3>
 
-{% endblock%}
+        {% if descErro %}
+            <p><strong>Descrição técnica:</strong> {{ descErro }}</p>
+        {% endif %}
+
+        {% if request.path %}
+            <p><strong>Rota acessada:</strong> {{ request.path }}</p>
+        {% endif %}
+
+        <p class="text-warning"><strong>Aviso:</strong> Estas informações só são exibidas para administradores.</p>
+
+    {% else %}
+        <!-- Informações gerais para outros perfis -->
+        <h3>Erro interno no servidor.</h3>
+        <p>Algo inesperado aconteceu. Já registramos o incidente.</p>
+    {% endif %}
+</div>
+
+<section>
+    <h2>O que você pode fazer agora?</h2>
+    <p>Tente voltar para a <a href="{{ url_for('home') }}">página inicial</a> ou use o menu acima para navegar.</p>
+</section>
+
+{% endblock %}

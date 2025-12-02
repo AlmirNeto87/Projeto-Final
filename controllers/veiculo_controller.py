@@ -1,145 +1,234 @@
 from flask import render_template, request, redirect, url_for, flash, session
 from config import db
-# IMPORTAÇÃO ATUALIZADA para o novo modelo
-from models.veiculo_model import Veiculo 
-from controllers.usuario_controller import login_obrigatorio, PerfilEnum
-from datetime import datetime
-from functools import wraps
+from models.veiculo_model import Veiculo
+from models.usuario_model import PerfilEnum
+from utils.decorators import login_obrigatorio, perfil_obrigatorio, verificar_lockdown
+from controllers.logs_controller import registrar_log
 
-# -----------------------------
-# DECORATOR PARA RESTRIÇÃO POR PERFIL
-# (Mantido como estava)
-# -----------------------------
-def perfil_obrigatorio(*perfis_permitidos):
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            usuario_perfil = session.get("usuario_perfil")
-            # Adicionando PerfilEnum para garantir que o perfil do usuário está na lista permitida
-            perfis_validos = [p.value for p in perfis_permitidos]
-            if not usuario_perfil or usuario_perfil not in perfis_validos:
-                flash("Você não tem permissão para acessar esta página!", "danger")
-                return redirect(url_for("home"))
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
 
-# -----------------------------
-# ROTAS DE CRUD PARA VEÍCULOS
-# As rotas listadas abaixo assumem que você configurou as URLs (endpoints) no seu arquivo principal
-# como 'listar_veiculos', 'cadastrar_veiculo', etc.
-# -----------------------------
-
-# Somente Gerente e Administrador podem listar (conforme requisito)
+# ======================================================
+# LISTAR VEÍCULOS
+# ======================================================
 @login_obrigatorio
+@verificar_lockdown
 @perfil_obrigatorio(PerfilEnum.GERENTE, PerfilEnum.ADMIN_SEGURANCA)
 def listar_veiculos():
-    
-    perfil_usuario = session.get("usuario_perfil") # A chave correta da sessão
-    
-    veiculos = Veiculo.query.all()
-    # Opções de situação definidas no modelo Veiculo
-    situacoes_permitidas = Veiculo.SITUACAO_OPCOES 
-    return render_template("veiculos.html", 
-                           titulo="Lista de Veículos", 
-                           veiculos=veiculos, 
-                           situacoes=situacoes_permitidas, perfil =perfil_usuario)
+    try:
+        perfil_usuario = session.get("usuario_perfil")
+        veiculos = Veiculo.query.all()
+        situacoes = Veiculo.SITUACAO_OPCOES
 
-# Somente Gerente e Administrador podem cadastrar
-@login_obrigatorio
-@perfil_obrigatorio(PerfilEnum.GERENTE, PerfilEnum.ADMIN_SEGURANCA)
-def cadastrar_veiculo():
-    situacoes_permitidas = Veiculo.SITUACAO_OPCOES 
-    
-    if request.method == 'POST':
-        # 1. Obter dados do formulário
-        modelo = request.form["modelo"]
-        marca = request.form["marca"]
-        ano_fabricacao = request.form["ano_fabricacao"]
-        cor = request.form["cor"]
-        descricao = request.form["descricao"]
-        local_armazenamento = request.form["local_armazenamento"]
-        placa = request.form["placa"]  # Novo campo de placa
-        situacao = request.form["situacao"] 
-
-        # 2. Validação básica (garantir que ano é um número inteiro)
-        try:
-            ano = int(ano_fabricacao)
-        except ValueError:
-            flash("Ano de Fabricação inválido. Deve ser um número inteiro.", "danger")
-            return redirect(url_for("cadastrar_veiculo"))
-        
-        # 3. Criar e Salvar o Veículo
-        novo_veiculo = Veiculo(
-            modelo=modelo,
-            marca=marca,
-            ano_fabricacao=ano,
-            cor=cor,
-            descricao=descricao,
-            placa=placa,  # Salvando a placa
-            local_armazenamento=local_armazenamento,
-            situacao=situacao 
+        return render_template(
+            "veiculos.html",
+            titulo="Lista de Veículos",
+            veiculos=veiculos,
+            situacoes=situacoes,
+            perfil=perfil_usuario
         )
 
-        db.session.add(novo_veiculo)
-        db.session.commit()
-        flash("Veículo cadastrado com sucesso!", "success")
-        return redirect(url_for("listar_veiculos"))
+    except Exception as e:
+        registrar_log("ERRO_LISTAR_VEICULOS", "Veiculo", f"Erro ao listar veículos: {e}")
+        flash("Erro ao carregar a lista de veículos.", "danger")
+        return redirect(url_for("internal_server_error"))
 
-    # Renderiza o template, passando as opções de situação
-    return render_template("cadastrar_veiculo.html", 
-                           titulo="Cadastro de Veículo", 
-                           situacoes=situacoes_permitidas)
 
-# Somente Gerente e Administrador podem editar
+# ======================================================
+# CADASTRAR VEÍCULO
+# ======================================================
 @login_obrigatorio
+@verificar_lockdown
+@perfil_obrigatorio(PerfilEnum.GERENTE, PerfilEnum.ADMIN_SEGURANCA)
+def cadastrar_veiculo():
+    situacoes = Veiculo.SITUACAO_OPCOES
+
+    if request.method == 'POST':
+        try:
+            modelo = request.form["modelo"]
+            marca = request.form["marca"]
+            ano_fabricacao_str = request.form["ano_fabricacao"]
+            cor = request.form["cor"]
+            descricao = request.form["descricao"]
+            local_armazenamento = request.form["local_armazenamento"]
+            placa = request.form["placa"]
+            situacao = request.form["situacao"]
+
+            # Validação do ano
+            try:
+                ano = int(ano_fabricacao_str)
+            except ValueError:
+                flash("Ano de Fabricação inválido. Deve ser um número inteiro.", "danger")
+                return redirect(url_for("cadastrar_veiculo"))
+
+            novo = Veiculo(
+                modelo=modelo,
+                marca=marca,
+                ano_fabricacao=ano,
+                cor=cor,
+                descricao=descricao,
+                placa=placa,
+                local_armazenamento=local_armazenamento,
+                situacao=situacao
+            )
+
+            db.session.add(novo)
+            db.session.commit()
+
+            registrar_log(
+                tipo_operacao="CRIAR",
+                tipo_modelo="Veiculo",
+                descricao=f"Veículo cadastrado: {marca} {modelo}",
+                modificacoes={
+                    "modelo": modelo,
+                    "marca": marca,
+                    "ano_fabricacao": ano,
+                    "cor": cor,
+                    "placa": placa,
+                    "situacao": situacao
+                }
+            )
+
+            flash("Veículo cadastrado com sucesso!", "success")
+            return redirect(url_for("listar_veiculos"))
+
+        except Exception as e:
+            registrar_log("ERRO_CADASTRAR_VEICULO", "Veiculo", f"Erro ao cadastrar: {e}")
+            db.session.rollback()
+            flash("Erro ao cadastrar veículo.", "danger")
+            return redirect(url_for("internal_server_error"))
+
+    try:
+        return render_template(
+            "cadastrar_veiculo.html",
+            titulo="Cadastro de Veículo",
+            situacoes=situacoes
+        )
+    except Exception as e:
+        registrar_log("ERRO_RENDER_CADASTRAR_VEICULO", "Sistema", f"Erro ao renderizar formulário: {e}")
+        return redirect(url_for("internal_server_error"))
+
+
+# ======================================================
+# EDITAR VEÍCULO
+# ======================================================
+@login_obrigatorio
+@verificar_lockdown
 @perfil_obrigatorio(PerfilEnum.ADMIN_SEGURANCA)
 def editar_veiculo(id):
-    veiculo = Veiculo.query.get(id)
-    situacoes_permitidas = Veiculo.SITUACAO_OPCOES
+    try:
+        veiculo = Veiculo.query.get(id)
+    except Exception as e:
+        registrar_log("ERRO_BUSCAR_VEICULO_EDITAR", "Veiculo", f"Erro ao buscar veículo: {e}")
+        return redirect(url_for("internal_server_error"))
 
     if not veiculo:
         return render_template("404.html", descErro="Veículo não encontrado")
+
+    situacoes = Veiculo.SITUACAO_OPCOES
 
     if request.method == "POST":
-        # 1. Atualizar campos
-        veiculo.modelo = request.form["modelo"]
-        veiculo.marca = request.form["marca"]
-        veiculo.cor = request.form["cor"]
-        veiculo.descricao = request.form["descricao"]
-        veiculo.local_armazenamento = request.form["local_armazenamento"]
-        veiculo.placa = request.form["placa"]  # Atualizando a placa
-        veiculo.situacao = request.form["situacao"] 
-        
-        # 2. Validação para ano de fabricação
-        ano_fabricacao_str = request.form["ano_fabricacao"]
         try:
-            veiculo.ano_fabricacao = int(ano_fabricacao_str)
-        except ValueError:
-            flash("Ano de Fabricação inválido. Deve ser um número inteiro.", "danger")
-            return redirect(url_for("editar_veiculo", id=id))
-        
-        # 3. Commit
-        db.session.commit()
-        flash("Veículo atualizado com sucesso!", "success")
-        return redirect(url_for("listar_veiculos"))
+            antes = {
+                "modelo": veiculo.modelo,
+                "marca": veiculo.marca,
+                "ano_fabricacao": veiculo.ano_fabricacao,
+                "cor": veiculo.cor,
+                "descricao": veiculo.descricao,
+                "placa": veiculo.placa,
+                "local_armazenamento": veiculo.local_armazenamento,
+                "situacao": veiculo.situacao
+            }
 
-    # Renderiza o template, passando o objeto Veiculo e as opções de situação
-    return render_template("editar_veiculo.html", 
-                           titulo="Edição de Veículo", 
-                           veiculo=veiculo, 
-                           situacoes=situacoes_permitidas)
+            veiculo.modelo = request.form["modelo"]
+            veiculo.marca = request.form["marca"]
+            veiculo.cor = request.form["cor"]
+            veiculo.descricao = request.form["descricao"]
+            veiculo.local_armazenamento = request.form["local_armazenamento"]
+            veiculo.placa = request.form["placa"]
+            veiculo.situacao = request.form["situacao"]
 
-# Somente Gerente e Administrador podem deletar
+            try:
+                veiculo.ano_fabricacao = int(request.form["ano_fabricacao"])
+            except ValueError:
+                flash("Ano de Fabricação inválido. Deve ser um número inteiro.", "danger")
+                return redirect(url_for("editar_veiculo", id=id))
+
+            db.session.commit()
+
+            registrar_log(
+                tipo_operacao="ATUALIZAR",
+                tipo_modelo="Veiculo",
+                descricao=f"Veículo atualizado: {veiculo.marca} {veiculo.modelo}",
+                modificacoes={"antes": antes, "depois": {
+                    "modelo": veiculo.modelo,
+                    "marca": veiculo.marca,
+                    "ano_fabricacao": veiculo.ano_fabricacao,
+                    "cor": veiculo.cor,
+                    "descricao": veiculo.descricao,
+                    "placa": veiculo.placa,
+                    "local_armazenamento": veiculo.local_armazenamento,
+                    "situacao": veiculo.situacao
+                }}
+            )
+
+            flash("Veículo atualizado com sucesso!", "success")
+            return redirect(url_for("listar_veiculos"))
+
+        except Exception as e:
+            registrar_log("ERRO_EDITAR_VEICULO", "Veiculo", f"Erro ao editar veículo {id}: {e}")
+            db.session.rollback()
+            flash("Erro ao atualizar veículo.", "danger")
+            return redirect(url_for("internal_server_error"))
+
+    try:
+        return render_template(
+            "editar_veiculo.html",
+            titulo="Edição de Veículo",
+            veiculo=veiculo,
+            situacoes=situacoes
+        )
+    except Exception as e:
+        registrar_log("ERRO_RENDER_EDITAR_VEICULO", "Sistema", f"Erro ao renderizar página de edição: {e}")
+        return redirect(url_for("internal_server_error"))
+
+
+# ======================================================
+# DELETAR VEÍCULO
+# ======================================================
 @login_obrigatorio
+@verificar_lockdown
 @perfil_obrigatorio(PerfilEnum.ADMIN_SEGURANCA)
 def deletar_veiculo(id):
-    veiculo = Veiculo.query.get(id)
+    try:
+        veiculo = Veiculo.query.get(id)
+    except Exception as e:
+        registrar_log("ERRO_BUSCAR_VEICULO_DELETAR", "Veiculo", f"Erro ao buscar veículo para deletar: {e}")
+        return redirect(url_for("internal_server_error"))
 
     if not veiculo:
         return render_template("404.html", descErro="Veículo não encontrado")
 
-    db.session.delete(veiculo)
-    db.session.commit()
-    flash("Veículo deletado com sucesso!", "success")
-    return redirect(url_for("listar_veiculos"))
+    try:
+        resumo = {
+            "modelo": veiculo.modelo,
+            "marca": veiculo.marca,
+            "placa": veiculo.placa
+        }
+
+        db.session.delete(veiculo)
+        db.session.commit()
+
+        registrar_log(
+            tipo_operacao="DELETAR",
+            tipo_modelo="Veiculo",
+            descricao=f"Veículo deletado: {resumo['marca']} {resumo['modelo']}",
+            modificacoes=resumo
+        )
+
+        flash("Veículo deletado com sucesso!", "success")
+        return redirect(url_for("listar_veiculos"))
+
+    except Exception as e:
+        registrar_log("ERRO_DELETAR_VEICULO", "Veiculo", f"Erro ao deletar veículo {id}: {e}")
+        db.session.rollback()
+        flash("Erro ao deletar veículo.", "danger")
+        return redirect(url_for("internal_server_error"))

@@ -1,39 +1,68 @@
 {% extends 'base.html' %}
 {% block conteudo %}
 
+<div class="text-center mb-4">
+    <h1 class="fw-bold">Entre em Contato</h1>
+    <p class="lead">A Wayne Security Corporation está sempre pronta para atender você.</p>
+</div>
 
+<div class="row g-4">
 
-    <div>
-        <h1>Contatos</h1>
-        
-                   
+    <!-- Informações de Contato -->
+    <div class="col-lg-4">
+        <div class="card shadow-lg h-100" style="background-color: #2F2B2B; color: #E0E0E0;">
+            <div class="card-body">
+                <h4 class="card-title mb-3">Informações Corporativas</h4>
+
+                <p><strong>Email:</strong><br>
+                    contato@wayne-security.com</p>
+
+                <p><strong>Telefone:</strong><br>
+                    +55 (85) 4002-8922</p>
+
+                <p><strong>Endereço Global:</strong><br>
+                    Wayne Tower – Gotham Plaza, 757<br>
+                    Gotham City, EUA</p>
+            </div>
+        </div>
     </div>
 
-    <section>
-        <h2>Entre em Contato Conosco</h2>
-        <p>Se você tiver alguma dúvida ou precisar de mais informações, não hesite em nos contactar. Estamos à disposição para atendê-lo!</p>
 
-        <h3>Formas de contato:</h3>
-        <ul>
-            <li><strong>Email:</strong> contato@minhaempresa.com.br</li>
-            <li><strong>Telefone:</strong> (85) 1234-5678</li>
-            <li><strong>Endereço:</strong> Rua Exemplo, 123 - Fortaleza, CE</li>
-        </ul>
+    <!-- Formulário de Contato -->
+    <div class="col-lg-8">
+        <div class="card shadow-lg" style="background-color: #2F2B2B; color: #E0E0E0;">
+            <div class="card-body">
+                <h4 class="card-title mb-3">Envie uma Mensagem</h4>
 
-        <h3>Formulário de Contato:</h3>
-        <form action="/enviar-mensagem" method="POST">
-            <label for="nome">Nome:</label>
-            <input type="text" id="nome" name="nome" required>
+                <form action="/enviar-mensagem" method="POST" class="row g-3">
 
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
+                    <div class="col-md-6">
+                        <label class="form-label">Nome</label>
+                        <input type="text" name="nome" class="form-control" required>
+                    </div>
 
-            <label for="mensagem">Mensagem:</label>
-            <textarea id="mensagem" name="mensagem" rows="4" required></textarea>
+                    <div class="col-md-6">
+                        <label class="form-label">E-mail</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
 
-            <button type="submit">Enviar</button>
-        </form>
-    </section>
+                    <div class="col-12">
+                        <label class="form-label">Mensagem</label>
+                        <textarea name="mensagem" rows="4" class="form-control" required></textarea>
+                    </div>
 
-    
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-danger px-4">
+                            Enviar
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
 {% endblock %}
