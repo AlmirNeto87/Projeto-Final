@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 {% block conteudo %}
 
-<h1>{{ titulo }}</h1>
+<div class="container mt-4">
 
-<div>
-    <h1>Oops! Algo deu errado.</h1>
+    <h1 class="text-danger">Oops! Algo deu errado.</h1>
 
+    <!-- ADMIN SEGURANÇA vê informações detalhadas -->
     {% if perfil_usuario == "Administrador de Segurança" %}
-        <!-- Detalhes completos para o ADMIN SEGURANÇA -->
-        <h3>Erro {{ error_code }} – {{ error_message }}</h3>
+
+        <h3 class="mt-3">Erro {{ error_code }} — {{ error_message }}</h3>
 
         {% if descErro %}
             <p><strong>Descrição técnica:</strong> {{ descErro }}</p>
@@ -18,18 +18,24 @@
             <p><strong>Rota acessada:</strong> {{ request.path }}</p>
         {% endif %}
 
-        <p class="text-warning"><strong>Aviso:</strong> Estas informações só são exibidas para administradores.</p>
+        <p class="text-warning mt-3">
+            <strong>Aviso:</strong> Estas informações são exibidas somente para Administradores de Segurança.
+        </p>
 
     {% else %}
-        <!-- Informações gerais para outros perfis -->
-        <h3>Erro interno no servidor.</h3>
-        <p>Algo inesperado aconteceu. Já registramos o incidente.</p>
+        <!-- Para usuários comuns -->
+        <h3 class="mt-3">Erro interno no servidor.</h3>
+        <p>Algo inesperado aconteceu. A equipe já foi notificada.</p>
     {% endif %}
-</div>
 
-<section>
-    <h2>O que você pode fazer agora?</h2>
-    <p>Tente voltar para a <a href="{{ url_for('home') }}">página inicial</a> ou use o menu acima para navegar.</p>
-</section>
+    <hr>
+
+    <h4>O que você pode fazer?</h4>
+    <ul>
+        <li>Retornar para a <a href="{{ url_for('home') }}">página inicial</a>.</li>
+        <li>Usar o menu de navegação acima.</li>
+    </ul>
+
+</div>
 
 {% endblock %}

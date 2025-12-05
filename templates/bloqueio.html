@@ -1,11 +1,26 @@
 {% extends 'base.html' %}
 
 {% block conteudo %}
-<div class="text-center mt-5">
-    <h1 class="display-5 text-danger">⚠️ Sistema em Modo de Segurança</h1>
-    <p class="lead mt-3">
-        O sistema está temporariamente restrito apenas a Administradores de Segurança.
-        <br>Por favor, tente novamente mais tarde.
+
+<div class="container text-center mt-5">
+
+    <h1 class="display-5 text-danger fw-bold">
+        ⚠️ Sistema em Modo de Segurança
+    </h1>
+
+    <p class="lead mt-4">
+        O sistema está temporariamente restrito apenas aos
+        <strong>Administradores de Segurança</strong>.
+        <br>
+        Para sua segurança, o acesso às demais áreas foi bloqueado.
     </p>
+
+    <hr class="my-4">
+
+    <p class="text-muted">
+        Se achar que isso é um erro, entre em contato com um administrador.
+    </p>
+
 </div>
+
 {% endblock %}

@@ -16,20 +16,23 @@ def listar_equipamentos():
     try:
         perfil_usuario = session.get("usuario_perfil")
         equipamentos = Equipamento.query.all()
-        situacoes_permitidas = Equipamento.SITUACAO_OPCOES
 
         return render_template(
             "equipamentos.html",
             titulo="Lista de Equipamentos",
             equipamentos=equipamentos,
-            situacoes=situacoes_permitidas,
+            situacoes=Equipamento.SITUACAO_OPCOES,
             perfil=perfil_usuario
         )
 
     except Exception as e:
         registrar_log("ERRO_LISTAR_EQUIPAMENTOS", "Equipamento", f"Erro ao listar equipamentos: {e}")
-        flash("Erro ao carregar lista de equipamentos.", "danger")
-        return redirect(url_for("internal_server_error"))
+
+        return render_template(
+            "404.html",
+            error_code=500,
+            error_message="Erro ao carregar a lista de equipamentos."
+        ), 500
 
 
 # ======================================================
@@ -39,15 +42,17 @@ def listar_equipamentos():
 @verificar_lockdown
 @perfil_obrigatorio(PerfilEnum.GERENTE, PerfilEnum.ADMIN_SEGURANCA)
 def cadastrar_equipamento():
-    if request.method == 'POST':
+
+    if request.method == "POST":
         try:
             nome = request.form["nome"]
             quantidade = int(request.form["quantidade"])
-            data_vencimento_str = request.form["data_vencimento"]
             descricao = request.form["descricao"]
             nivel_perigo = request.form["nivel_perigo"]
             situacao = request.form["situacao"]
+            data_vencimento_str = request.form["data_vencimento"]
 
+            # Validação da data
             try:
                 data_vencimento = datetime.strptime(data_vencimento_str, "%Y-%m-%d").date()
             except ValueError:
@@ -84,18 +89,29 @@ def cadastrar_equipamento():
         except Exception as e:
             registrar_log("ERRO_CADASTRAR_EQUIPAMENTO", "Equipamento", f"Erro ao cadastrar: {e}")
             db.session.rollback()
-            flash("Erro ao cadastrar equipamento.", "danger")
-            return redirect(url_for("internal_server_error"))
 
+            return render_template(
+                "404.html",
+                error_code=500,
+                error_message="Erro ao cadastrar equipamento."
+            ), 500
+
+    # GET
     try:
         return render_template(
             "cadastrar_equipamento.html",
             titulo="Cadastro de Equipamentos",
             situacoes=Equipamento.SITUACAO_OPCOES
         )
+
     except Exception as e:
         registrar_log("ERRO_RENDER_CADASTRAR_EQUIPAMENTO", "Sistema", f"Erro ao renderizar formulário: {e}")
-        return redirect(url_for("internal_server_error"))
+
+        return render_template(
+            "404.html",
+            error_code=500,
+            error_message="Erro ao renderizar o formulário de cadastro."
+        ), 500
 
 
 # ======================================================
@@ -109,10 +125,15 @@ def editar_equipamento(id):
         equipamento = Equipamento.query.get(id)
     except Exception as e:
         registrar_log("ERRO_BUSCAR_EQUIPAMENTO_EDITAR", "Equipamento", f"Erro ao buscar equipamento: {e}")
-        return redirect(url_for("internal_server_error"))
+
+        return render_template(
+            "404.html",
+            error_code=500,
+            error_message="Erro ao buscar equipamento."
+        ), 500
 
     if not equipamento:
-        return render_template("404.html", descErro="Equipamento não encontrado")
+        return render_template("404.html", descErro="Equipamento não encontrado"), 404
 
     if request.method == "POST":
         try:
@@ -136,7 +157,7 @@ def editar_equipamento(id):
                     request.form["data_vencimento"], "%Y-%m-%d"
                 ).date()
             except ValueError:
-                flash("Data de vencimento inválida. Use o formato AAAA-MM-DD.", "danger")
+                flash("Data de vencimento inválida.", "danger")
                 return redirect(url_for("editar_equipamento", id=id))
 
             db.session.commit()
@@ -159,11 +180,16 @@ def editar_equipamento(id):
             return redirect(url_for("listar_equipamentos"))
 
         except Exception as e:
-            registrar_log("ERRO_EDITAR_EQUIPAMENTO", "Equipamento", f"Erro ao editar equipamento {id}: {e}")
+            registrar_log("ERRO_EDITAR_EQUIPAMENTO", "Equipamento", f"Erro ao editar: {e}")
             db.session.rollback()
-            flash("Erro ao atualizar equipamento.", "danger")
-            return redirect(url_for("internal_server_error"))
 
+            return render_template(
+                "404.html",
+                error_code=500,
+                error_message="Erro ao atualizar equipamento."
+            ), 500
+
+    # GET
     try:
         return render_template(
             "editar_equipamento.html",
@@ -171,9 +197,15 @@ def editar_equipamento(id):
             equipamento=equipamento,
             situacoes=Equipamento.SITUACAO_OPCOES
         )
+
     except Exception as e:
-        registrar_log("ERRO_RENDER_EDITAR_EQUIPAMENTO", "Sistema", f"Erro ao renderizar página de edição: {e}")
-        return redirect(url_for("internal_server_error"))
+        registrar_log("ERRO_RENDER_EDITAR_EQUIPAMENTO", "Sistema", f"Erro ao renderizar página: {e}")
+
+        return render_template(
+            "404.html",
+            error_code=500,
+            error_message="Erro ao renderizar a edição."
+        ), 500
 
 
 # ======================================================
@@ -187,10 +219,15 @@ def deletar_equipamento(id):
         equipamento = Equipamento.query.get(id)
     except Exception as e:
         registrar_log("ERRO_BUSCAR_EQUIPAMENTO_DELETAR", "Equipamento", f"Erro ao buscar equipamento: {e}")
-        return redirect(url_for("internal_server_error"))
+
+        return render_template(
+            "404.html",
+            error_code=500,
+            error_message="Erro ao buscar equipamento."
+        ), 500
 
     if not equipamento:
-        return render_template("404.html", descErro="Equipamento não encontrado")
+        return render_template("404.html", descErro="Equipamento não encontrado"), 404
 
     try:
         info = {
@@ -213,7 +250,11 @@ def deletar_equipamento(id):
         return redirect(url_for("listar_equipamentos"))
 
     except Exception as e:
-        registrar_log("ERRO_DELETAR_EQUIPAMENTO", "Equipamento", f"Erro ao deletar equipamento {id}: {e}")
+        registrar_log("ERRO_DELETAR_EQUIPAMENTO", "Equipamento", f"Erro ao deletar: {e}")
         db.session.rollback()
-        flash("Erro ao deletar equipamento.", "danger")
-        return redirect(url_for("internal_server_error"))
+
+        return render_template(
+            "404.html",
+            error_code=500,
+            error_message="Erro ao deletar equipamento."
+        ), 500

@@ -5,9 +5,10 @@ import json
 
 
 # =====================================================
-# NORMALIZA PERFIL
+# FUNÇÃO INTERNA — NORMALIZAR PERFIL
 # =====================================================
 def _normalize_perfil_input(p):
+    """Normaliza um perfil recebido (enum, string, etc)."""
     try:
         return p.value
     except Exception:
@@ -18,95 +19,103 @@ def _normalize_perfil_input(p):
 
 
 # =====================================================
-# LOGIN OBRIGATÓRIO
+# DECORATOR — LOGIN OBRIGATÓRIO
 # =====================================================
 def login_obrigatorio(f):
     @wraps(f)
-    def decorated_function(*args, **kwargs):
-        from controllers.logs_controller import registrar_log
+    def decorator(*args, **kwargs):
+        from controllers.logs_controller import registrar_log  # import seguro
 
         if "usuario_id" not in session:
             try:
                 registrar_log(
                     "ACESSO_NEGADO",
                     "Sistema",
-                    f"Acesso negado à rota {request.path} — usuário não logado.",
+                    f"Tentativa de acesso sem login na rota: {request.path}",
                     modificacoes=json.dumps({"rota": request.path}, ensure_ascii=False)
                 )
-            except:
+            except Exception:
                 pass
 
-            flash("Você precisa estar logado para acessar esta página!", "danger")
+            flash("Você precisa estar logado para acessar esta página.", "danger")
             return redirect(url_for("auth.login"))
 
         return f(*args, **kwargs)
-    return decorated_function
 
-
-# =====================================================
-# PERFIL OBRIGATÓRIO
-# =====================================================
-def perfil_obrigatorio(*perfis_permitidos):
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            from controllers.logs_controller import registrar_log
-
-            usuario_id = session.get("usuario_id")
-
-            if not usuario_id:
-                flash("Você precisa estar logado!", "danger")
-                return redirect(url_for("auth.login"))
-
-            usuario = Usuario.query.get(usuario_id)
-            if not usuario:
-                session.clear()
-                flash("Sessão inválida.", "warning")
-                return redirect(url_for("auth.login"))
-
-            perfis_validos = [_normalize_perfil_input(p) for p in perfis_permitidos]
-            usuario_perfil_str = usuario.perfil.value
-
-            if usuario_perfil_str not in perfis_validos:
-                try:
-                    registrar_log(
-                        "ACESSO_NEGADO",
-                        "Sistema",
-                        f"Acesso negado à rota {request.path}. Perfil insuficiente.",
-                        modificacoes=json.dumps({
-                            "rota": request.path,
-                            "perfil_usuario": usuario_perfil_str,
-                            "perfis_permitidos": perfis_validos
-                        }, ensure_ascii=False)
-                    )
-                except:
-                    pass
-
-                flash("Você não tem permissão para acessar esta página!", "danger")
-                return redirect(url_for("home"))
-
-            return f(*args, **kwargs)
-        return decorated_function
     return decorator
 
 
 # =====================================================
-# DECORATOR — VERIFICAR LOCKDOWN (AGORA SIM!)
+# DECORATOR — PERFIL OBRIGATÓRIO
+# =====================================================
+def perfil_obrigatorio(*perfis_permitidos):
+    def wrapper(f):
+        @wraps(f)
+        def decorator(*args, **kwargs):
+            from controllers.logs_controller import registrar_log
+
+            usuario_id = session.get("usuario_id")
+
+            # Usuário não logado
+            if not usuario_id:
+                flash("Você precisa estar logado!", "danger")
+                return redirect(url_for("auth.login"))
+
+            # Carregar usuário
+            usuario = Usuario.query.get(usuario_id)
+            if not usuario:
+                session.clear()
+                flash("Sessão expirada ou inválida.", "warning")
+                return redirect(url_for("auth.login"))
+
+            # Normalizar perfis permitidos
+            perfis_validos = [_normalize_perfil_input(p) for p in perfis_permitidos]
+            perfil_usuario = usuario.perfil.value
+
+            # Verificar permissão
+            if perfil_usuario not in perfis_validos:
+                try:
+                    registrar_log(
+                        "ACESSO_NEGADO",
+                        "Sistema",
+                        f"Perfil sem permissão para acessar a rota {request.path}",
+                        modificacoes=json.dumps({
+                            "rota": request.path,
+                            "perfil_usuario": perfil_usuario,
+                            "perfis_permitidos": perfis_validos
+                        }, ensure_ascii=False)
+                    )
+                except Exception:
+                    pass
+
+                flash("Você não tem permissão para acessar esta funcionalidade.", "danger")
+                return redirect(url_for("home"))
+
+            return f(*args, **kwargs)
+
+        return decorator
+    return wrapper
+
+
+# =====================================================
+# DECORATOR — VERIFICAR LOCKDOWN
 # =====================================================
 def verificar_lockdown(f):
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorator(*args, **kwargs):
 
-        # Se lockdown desligado → passa
-        if not current_app.config.get("LOCKDOWN_ATIVO", False):
+        lockdown_ativo = current_app.config.get("LOCKDOWN_ATIVO", False)
+
+        # Lockdown desligado → passa direto
+        if not lockdown_ativo:
             return f(*args, **kwargs)
 
-        # Se for Admin Segurança → passa
-        usuario_perfil = session.get("usuario_perfil")
-        if usuario_perfil == PerfilEnum.ADMIN_SEGURANCA.value:
+        # Admin de Segurança pode ignorar lockdown
+        perfil_atual = session.get("usuario_perfil")
+        if perfil_atual == PerfilEnum.ADMIN_SEGURANCA.value:
             return f(*args, **kwargs)
 
-        # Outros perfis → bloqueados
+        # Demais perfis são bloqueados
         return redirect(url_for("pagina_bloqueio"))
 
-    return decorated_function
+    return decorator

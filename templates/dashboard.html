@@ -182,7 +182,7 @@ const inicialRows = [
     {% for log in ultimos_logs %}
     {
         "ID": "{{ log.id }}",
-        "Data": "{{ log.horario.strftime('%d/%m/%Y %H:%M') }}",
+        "Data": "{{ log.horario_brasil.strftime('%d/%m/%Y %H:%M') }}",
         "Usuário": "{{ log.usuario_nome }}",
         "Operação": "{{ log.tipo_operacao }}",
         "Descrição": "{{ log.descricao|replace('\n',' ') }}"

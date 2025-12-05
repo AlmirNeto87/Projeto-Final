@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, redirect, url_for
 from config import db, DATABASE_URI
 
 # Controladores normais
@@ -12,7 +12,6 @@ from controllers.logs_controller import logs_bp
 
 # Blueprint de Dashboard
 from controllers.dashboard_controller import dashboard_bp
-
 
 # Mocks
 from mock.usuarios_mock import criar_dados_mock_usuarios
@@ -32,7 +31,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config["LOCKDOWN_ATIVO"] = False
 
 
-
 db.init_app(app)
 
 
@@ -44,10 +42,17 @@ app.register_blueprint(logs_bp)          # Logs
 app.register_blueprint(dashboard_bp)     # Dashboard
 
 
+# Página inicial do sistema (home interna)
+app.add_url_rule("/home", "home", usuario_controller.home)
+
+
+
 # =============================================================
-# HOME
+# ROTA INICIAL → REDIRECIONA PARA LOGIN
 # =============================================================
-app.add_url_rule("/", "home", usuario_controller.home)
+@app.route("/")
+def index():
+    return redirect(url_for("auth.login"))
 
 
 # =============================================================

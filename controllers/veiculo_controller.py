@@ -29,7 +29,11 @@ def listar_veiculos():
     except Exception as e:
         registrar_log("ERRO_LISTAR_VEICULOS", "Veiculo", f"Erro ao listar veículos: {e}")
         flash("Erro ao carregar a lista de veículos.", "danger")
-        return redirect(url_for("internal_server_error"))
+        return render_template(
+            "404.html",
+            error_code=500,
+            error_message="Erro ao listar veículos."
+        ), 500
 
 
 # ======================================================
@@ -94,7 +98,11 @@ def cadastrar_veiculo():
             registrar_log("ERRO_CADASTRAR_VEICULO", "Veiculo", f"Erro ao cadastrar: {e}")
             db.session.rollback()
             flash("Erro ao cadastrar veículo.", "danger")
-            return redirect(url_for("internal_server_error"))
+            return render_template(
+                "404.html",
+                error_code=500,
+                error_message="Erro ao cadastrar veículo."
+            ), 500
 
     try:
         return render_template(
@@ -103,8 +111,13 @@ def cadastrar_veiculo():
             situacoes=situacoes
         )
     except Exception as e:
-        registrar_log("ERRO_RENDER_CADASTRAR_VEICULO", "Sistema", f"Erro ao renderizar formulário: {e}")
-        return redirect(url_for("internal_server_error"))
+        registrar_log("ERRO_RENDER_CADASTRAR_VEICULO", "Sistema",
+                      f"Erro ao renderizar formulário: {e}")
+        return render_template(
+            "404.html",
+            error_code=500,
+            error_message="Erro ao carregar formulário de cadastro."
+        ), 500
 
 
 # ======================================================
@@ -118,10 +131,18 @@ def editar_veiculo(id):
         veiculo = Veiculo.query.get(id)
     except Exception as e:
         registrar_log("ERRO_BUSCAR_VEICULO_EDITAR", "Veiculo", f"Erro ao buscar veículo: {e}")
-        return redirect(url_for("internal_server_error"))
+        return render_template(
+            "404.html",
+            error_code=500,
+            error_message="Erro ao buscar veículo."
+        ), 500
 
     if not veiculo:
-        return render_template("404.html", descErro="Veículo não encontrado")
+        return render_template(
+            "404.html",
+            error_code=404,
+            error_message="Veículo não encontrado."
+        ), 404
 
     situacoes = Veiculo.SITUACAO_OPCOES
 
@@ -149,7 +170,7 @@ def editar_veiculo(id):
             try:
                 veiculo.ano_fabricacao = int(request.form["ano_fabricacao"])
             except ValueError:
-                flash("Ano de Fabricação inválido. Deve ser um número inteiro.", "danger")
+                flash("Ano de Fabricação inválido.", "danger")
                 return redirect(url_for("editar_veiculo", id=id))
 
             db.session.commit()
@@ -158,16 +179,19 @@ def editar_veiculo(id):
                 tipo_operacao="ATUALIZAR",
                 tipo_modelo="Veiculo",
                 descricao=f"Veículo atualizado: {veiculo.marca} {veiculo.modelo}",
-                modificacoes={"antes": antes, "depois": {
-                    "modelo": veiculo.modelo,
-                    "marca": veiculo.marca,
-                    "ano_fabricacao": veiculo.ano_fabricacao,
-                    "cor": veiculo.cor,
-                    "descricao": veiculo.descricao,
-                    "placa": veiculo.placa,
-                    "local_armazenamento": veiculo.local_armazenamento,
-                    "situacao": veiculo.situacao
-                }}
+                modificacoes={
+                    "antes": antes,
+                    "depois": {
+                        "modelo": veiculo.modelo,
+                        "marca": veiculo.marca,
+                        "ano_fabricacao": veiculo.ano_fabricacao,
+                        "cor": veiculo.cor,
+                        "descricao": veiculo.descricao,
+                        "placa": veiculo.placa,
+                        "local_armazenamento": veiculo.local_armazenamento,
+                        "situacao": veiculo.situacao
+                    }
+                }
             )
 
             flash("Veículo atualizado com sucesso!", "success")
@@ -177,7 +201,11 @@ def editar_veiculo(id):
             registrar_log("ERRO_EDITAR_VEICULO", "Veiculo", f"Erro ao editar veículo {id}: {e}")
             db.session.rollback()
             flash("Erro ao atualizar veículo.", "danger")
-            return redirect(url_for("internal_server_error"))
+            return render_template(
+                "404.html",
+                error_code=500,
+                error_message="Erro ao atualizar veículo."
+            ), 500
 
     try:
         return render_template(
@@ -187,8 +215,13 @@ def editar_veiculo(id):
             situacoes=situacoes
         )
     except Exception as e:
-        registrar_log("ERRO_RENDER_EDITAR_VEICULO", "Sistema", f"Erro ao renderizar página de edição: {e}")
-        return redirect(url_for("internal_server_error"))
+        registrar_log("ERRO_RENDER_EDITAR_VEICULO", "Sistema",
+                      f"Erro ao renderizar página de edição: {e}")
+        return render_template(
+            "404.html",
+            error_code=500,
+            error_message="Erro ao carregar página de edição."
+        ), 500
 
 
 # ======================================================
@@ -201,11 +234,20 @@ def deletar_veiculo(id):
     try:
         veiculo = Veiculo.query.get(id)
     except Exception as e:
-        registrar_log("ERRO_BUSCAR_VEICULO_DELETAR", "Veiculo", f"Erro ao buscar veículo para deletar: {e}")
-        return redirect(url_for("internal_server_error"))
+        registrar_log("ERRO_BUSCAR_VEICULO_DELETAR", "Veiculo",
+                      f"Erro ao buscar veículo para deletar: {e}")
+        return render_template(
+            "404.html",
+            error_code=500,
+            error_message="Erro ao buscar veículo para deletar."
+        ), 500
 
     if not veiculo:
-        return render_template("404.html", descErro="Veículo não encontrado")
+        return render_template(
+            "404.html",
+            error_code=404,
+            error_message="Veículo não encontrado."
+        ), 404
 
     try:
         resumo = {
@@ -231,4 +273,8 @@ def deletar_veiculo(id):
         registrar_log("ERRO_DELETAR_VEICULO", "Veiculo", f"Erro ao deletar veículo {id}: {e}")
         db.session.rollback()
         flash("Erro ao deletar veículo.", "danger")
-        return redirect(url_for("internal_server_error"))
+        return render_template(
+            "404.html",
+            error_code=500,
+            error_message="Erro ao deletar veículo."
+        ), 500
