@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<h1 class="mb-4">{{ titulo if titulo else "Chat Interno" }}</h1>
+
+<div class="row">
+
+    <!-- LISTA DE CONTATOS -->
+    <div class="col-md-3">
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <strong>Usuários Online</strong>
+            </div>
+
+            <ul id="lista-usuarios" class="list-group list-group-flush" style="min-height: 400px;">
+                <!-- Preenchido pelo JS -->
+            </ul>
+        </div>
+
+    </div>
+
+    <!-- ÁREA DO CHAT -->
+    <div class="col-md-9">
+
+        <div class="card shadow-sm">
+
+            <div class="card-header bg-light">
+                <h5 id="titulo-chat" class="mb-0 text-secondary">
+                    Selecione alguém para conversar
+                </h5>
+            </div>
+
+            <div id="area-mensagens"
+                 class="card-body"
+                 style="height: 450px; overflow-y: auto; background: #f8f9fa;">
+                <!-- Mensagens serão inseridas aqui -->
+            </div>
+
+            <div class="card-footer bg-white">
+                <div class="input-group">
+                    <input id="msg"
+                           class="form-control"
+                           placeholder="Digite uma mensagem..."
+                           autocomplete="off">
+
+                    <button id="btnEnviar"
+                            class="btn btn-primary"
+                            type="button">
+                        Enviar
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Socket.IO -->
+<script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+
+{% endblock %}
