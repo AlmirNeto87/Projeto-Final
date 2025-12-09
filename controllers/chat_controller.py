@@ -1,10 +1,10 @@
-# controllers/chat_controller.py
 from flask import (
     Blueprint, render_template, session, jsonify, current_app, request
 )
 from utils.decorators import login_obrigatorio, verificar_lockdown
 from models.usuario_model import Usuario, PerfilEnum
 from models.chat_message_model import ChatMessage
+from models.chat_sessao_model import ChatSessao
 from config import db, socketio
 
 from flask_socketio import emit, join_room, leave_room
@@ -12,8 +12,7 @@ from datetime import datetime, timezone
 
 chat_bp = Blueprint("chat", __name__)
 
-# Lista global de usuários online
-# { user_id: socket_sid }
+# Mapa: { user_id : socket_sid }
 online_users = {}
 
 
@@ -34,15 +33,19 @@ def chat():
 
 
 # ============================================================
-# 2. Contatos permitidos
+# 2. Contatos permitidos + sessões ativas + APENAS online
 # ============================================================
 @chat_bp.route("/chat/contatos")
 @login_obrigatorio
+@verificar_lockdown
 def contatos():
 
     usuario_logado = Usuario.query.get(session["usuario_id"])
     perfil = usuario_logado.perfil
 
+    # ------------------------------
+    # 🔹 1) Permissões originais
+    # ------------------------------
     if perfil == PerfilEnum.FUNCIONARIO:
         permitidos = Usuario.query.filter(
             Usuario.perfil == PerfilEnum.FUNCIONARIO,
@@ -56,21 +59,103 @@ def contatos():
         ).all()
 
     else:  # ADMIN
-        permitidos = Usuario.query.filter(Usuario.id != usuario_logado.id).all()
+        permitidos = Usuario.query.filter(
+            Usuario.id != usuario_logado.id
+        ).all()
 
+    # ------------------------------
+    # 🔹 2) Sessões ativas (para manter conversas abertas)
+    # ------------------------------
+    sessoes = ChatSessao.query.filter_by(ativa=True).all()
+
+    ids_sessao = []
+    for s in sessoes:
+        if s.usuario1_id == usuario_logado.id:
+            ids_sessao.append(s.usuario2_id)
+        elif s.usuario2_id == usuario_logado.id:
+            ids_sessao.append(s.usuario1_id)
+
+    # ------------------------------
+    # 🔹 3) Somar permitidos + sessões
+    # ------------------------------
+    contatos_ids = {u.id for u in permitidos}
+    contatos_ids.update(ids_sessao)
+
+    # ------------------------------
+    # 🔹 4) Filtrar apenas os online
+    # ------------------------------
+    online_ids = [uid for uid in contatos_ids if uid in online_users]
+
+    # ------------------------------
+    # 🔹 5) Buscar apenas usuários online
+    # ------------------------------
+    usuarios_final = Usuario.query.filter(Usuario.id.in_(online_ids)).all()
+
+    # ------------------------------
+    # 🔹 6) Resposta final
+    # ------------------------------
     return jsonify([
         {
             "id": u.id,
             "nome": u.name,
             "perfil": u.perfil.value,
-            "online": u.id in online_users
+            "online": True
         }
-        for u in permitidos
+        for u in usuarios_final
     ])
 
 
 # ============================================================
-# 3. SOCKET — Conexão
+# 3. Criar ou ativar sessão
+# ============================================================
+def criar_ou_ativar_sessao(user1, user2):
+
+    sessao = ChatSessao.query.filter(
+        ((ChatSessao.usuario1_id == user1) & (ChatSessao.usuario2_id == user2)) |
+        ((ChatSessao.usuario1_id == user2) & (ChatSessao.usuario2_id == user1))
+    ).first()
+
+    if sessao:
+        sessao.ativa = True
+    else:
+        db.session.add(ChatSessao(
+            usuario1_id=user1,
+            usuario2_id=user2,
+            ativa=True
+        ))
+
+    db.session.commit()
+
+
+# ============================================================
+# 4. Fechar sessão manualmente (REST)
+# ============================================================
+@chat_bp.route("/chat/fechar/<int:contato_id>", methods=["POST"])
+@login_obrigatorio
+def fechar_sessao(contato_id):
+    uid = session["usuario_id"]
+
+    sessao = ChatSessao.query.filter(
+        ((ChatSessao.usuario1_id == uid) & (ChatSessao.usuario2_id == contato_id)) |
+        ((ChatSessao.usuario1_id == contato_id) & (ChatSessao.usuario2_id == uid))
+    ).first()
+
+    if sessao:
+        sessao.ativa = False
+        db.session.commit()
+
+    # Mensagem em tempo real para o outro usuário
+    socketio.emit(
+        "sessao_fechada",
+        {"de": uid},
+        room=contato_id
+    )
+
+    return jsonify({"ok": True})
+
+
+# ============================================================
+# 5. SOCKET — Conexão
 # ============================================================
 @socketio.on("connect")
 def handle_connect():
@@ -79,18 +164,21 @@ def handle_connect():
         if not uid:
             return
 
-        # registra o socket do usuário
         online_users[uid] = request.sid
         join_room(uid)
 
-        emit("user_online", {"id": uid, "nome": session.get("usuario_nome")}, broadcast=True)
+        emit("user_online", {
+            "id": uid,
+            "nome": session["usuario_nome"],
+            "perfil": session["usuario_perfil"]
+        }, broadcast=True)
 
     except Exception as e:
         current_app.logger.error(f"[CHAT] Erro ao conectar socket: {e}")
 
 
 # ============================================================
-# 4. SOCKET — Desconexão
+# 6. SOCKET — Desconexão
 # ============================================================
 @socketio.on("disconnect")
 def handle_disconnect():
@@ -109,11 +197,10 @@ def handle_disconnect():
 
 
 # ============================================================
-# 5. SOCKET — Enviar mensagem
+# 7. SOCKET — Enviar mensagem
 # ============================================================
 @socketio.on("send_message")
 def handle_send_message(data):
-
     try:
         de_id = session["usuario_id"]
         de_nome = session["usuario_nome"]
@@ -123,20 +210,22 @@ def handle_send_message(data):
         if not texto:
             return
 
-        # salva UTC → usando utcnow() conforme pedido
+        # ativa/reativa sessão
+        criar_ou_ativar_sessao(de_id, para_id)
+
         ts = datetime.utcnow().replace(tzinfo=timezone.utc)
 
+        # salva no banco
         msg = ChatMessage(
             de_id=de_id,
             para_id=para_id,
             texto=texto,
             horario=ts
         )
-
         db.session.add(msg)
         db.session.commit()
 
-        # envia ao destino
+        # envia para outro
         emit(
             "receive_message",
             {
@@ -148,7 +237,7 @@ def handle_send_message(data):
             room=para_id
         )
 
-        # reflete no emissor
+        # confirmação para o emissor
         emit(
             "message_sent",
             {
@@ -164,7 +253,7 @@ def handle_send_message(data):
 
 
 # ============================================================
-# 6. SOCKET — Carregar histórico (para o chat.js novo)
+# 8. SOCKET — Carregar histórico
 # ============================================================
 @socketio.on("load_messages")
 def handle_load_messages(data):
@@ -177,27 +266,29 @@ def handle_load_messages(data):
             ((ChatMessage.de_id == contato_id) & (ChatMessage.para_id == usuario_id))
         ).order_by(ChatMessage.horario.asc()).all()
 
-        lista = [
-            {
-                "de": m.de_id,
-                "para": m.para_id,
-                "texto": m.texto,
-                "horario": m.horario.isoformat()
-            }
-            for m in mensagens
-        ]
-
-        emit("load_messages_response", lista, room=request.sid)
+        emit(
+            "load_messages_response",
+            [
+                {
+                    "de": m.de_id,
+                    "texto": m.texto,
+                    "horario": m.horario.isoformat()
+                }
+                for m in mensagens
+            ],
+            room=request.sid
+        )
 
     except Exception as e:
         current_app.logger.error(f"[CHAT] Erro ao carregar histórico: {e}")
 
 
 # ============================================================
-# 7. REST — Histórico via HTTP
+# 9. REST — Histórico HTTP
 # ============================================================
 @chat_bp.route("/chat/historico/<int:contato_id>")
 @login_obrigatorio
+@verificar_lockdown
 def historico(contato_id):
     usuario_id = session["usuario_id"]
 
@@ -209,7 +300,6 @@ def historico(contato_id):
     return jsonify([
         {
             "de": m.de_id,
-            "para": m.para_id,
             "texto": m.texto,
             "horario": m.horario.isoformat()
         }

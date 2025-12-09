@@ -22,3 +22,6 @@ __pycache__/
 
 # Arquivos Rar
 *.rar
+
+#Arquivo Backup
+/Backup/

@@ -1,5 +1,13 @@
 {% extends "base.html" %}
+
 {% block conteudo %}
+
+<!-- Atribui dados do usuário ao BODY para uso no chat.js -->
+<script>
+document.body.dataset.usuarioId = "{{ usuario_id }}";
+document.body.dataset.usuarioNome = "{{ usuario_nome }}";
+document.body.dataset.usuarioPerfil = "{{ usuario_perfil }}";
+</script>
 
 <h1 class="mb-4">{{ titulo if titulo else "Chat Interno" }}</h1>
 
@@ -10,11 +18,13 @@
 
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
-                <strong>Usuários Online</strong>
+                <strong>Contatos</strong>
             </div>
 
-            <ul id="lista-usuarios" class="list-group list-group-flush" style="min-height: 400px;">
-                <!-- Preenchido pelo JS -->
+            <ul id="lista-usuarios"
+                class="list-group list-group-flush"
+                style="min-height: 450px;">
+                <!-- Preenchido pelo chat.js -->
             </ul>
         </div>
 
@@ -25,24 +35,30 @@
 
         <div class="card shadow-sm">
 
-            <div class="card-header bg-light">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h5 id="titulo-chat" class="mb-0 text-secondary">
                     Selecione alguém para conversar
                 </h5>
+
+                <!-- Botão fechar conversa (UI controlado pelo chat.js) -->
+                <button id="btnFecharSessao"
+                        class="btn btn-sm btn-outline-danger d-none">
+                    Fechar Conversa
+                </button>
             </div>
 
             <div id="area-mensagens"
-                 class="card-body"
-                 style="height: 450px; overflow-y: auto; background: #f8f9fa;">
+                class="card-body"
+                style="height: 450px; overflow-y: auto; background: #f8f9fa;">
                 <!-- Mensagens serão inseridas aqui -->
             </div>
 
             <div class="card-footer bg-white">
                 <div class="input-group">
                     <input id="msg"
-                           class="form-control"
-                           placeholder="Digite uma mensagem..."
-                           autocomplete="off">
+                        class="form-control"
+                        placeholder="Digite uma mensagem..."
+                        autocomplete="off">
 
                     <button id="btnEnviar"
                             class="btn btn-primary"
