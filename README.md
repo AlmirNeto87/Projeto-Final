@@ -68,27 +68,29 @@ O sistema possui um chat completo, privado e seguro, totalmente integrado ao con
 Recursos do Chat
 
 ✔ Comunicação em tempo real com Flask-SocketIO
+
 ✔ Apenas usuários online aparecem na lista
+
 ✔ Cada conversa possui uma sessão exclusiva:
+- A sessão é criada ao enviar a primeira mensagem
+- Pode ser fechada manualmente pelo botão Fechar Conversa
+- A conversa some da lista em tempo real
 
-A sessão é criada ao enviar a primeira mensagem
+  ✔ Previews de últimas mensagens
+  
+  ✔ Histórico carregado via WebSocket
+  
+  ✔ Perfil respeita regras de contato:
 
-Pode ser fechada manualmente pelo botão Fechar Conversa
-
-A conversa some da lista em tempo real
-✔ Previews de últimas mensagens
-✔ Histórico carregado via WebSocket
-✔ Perfil respeita regras de contato:
-
-Funcionário ↔ Funcionário
-
-Gerente ↔ Gerente + Funcionário
-
-Administrador ↔ todos
+- Funcionário ↔ Funcionário
+- Gerente ↔ Gerente + Funcionário
+- Administrador ↔ todos
 
 Tecnologias envolvidas
-
-Socket.IO 4.x
+- Socket.IO 4.x
+- Eventos: `connect, disconnect, send_message, receive_message, load_messages, message_sent`
+- Sessões armazenadas em `chat_sessao_model.py`
+- Mensagens armazenadas em `chat_message_model.py`
 
 
 
@@ -157,7 +159,7 @@ Cada módulo inclui:
     veiculo_model.py
     equipamento_model.py
     log_model.py
-    chat_model.py
+    chat_message_model.py
     chat_sessao_model.py
 
     /templates
@@ -167,7 +169,7 @@ Cada módulo inclui:
     logs.html
     ...
 
-    /mock
+    /mock -< Dados Ficticios
     usuario_mock.py
     veiculo_mock.py
     equipamento_mock.py
@@ -195,6 +197,9 @@ Cada módulo inclui:
 - Flask SQLAlchemy
 - Blueprints
 - Manipulação JSON e CSV
+- Flask SocketIO
+- Eventlet (server realtime)
+- CSV/JSON export
 
 ### **Frontend**
 - HTML5
@@ -259,5 +264,6 @@ Cada módulo inclui:
 - Sessões protegidas
 - Permissões por perfil
 - Logs completos (incluindo acessos negados)
+- Bloqueio de Lockdown para acesso crítico
 - Rotas críticas protegidas por decoradores
 
