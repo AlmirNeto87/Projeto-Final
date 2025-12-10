@@ -35,16 +35,16 @@ def ajustar_para_brasil(dt):
 def dashboard():
     try:
         # ==============================
-        # Resumo das entidades
+        # RESUMO
         # ==============================
         total_usuarios = Usuario.query.count()
         total_veiculos = Veiculo.query.count()
         total_equipamentos = Equipamento.query.count()
 
         # ==============================
-        # Acessos negados HOJE (BR)
+        # ACESSOS NEGADOS HOJE
         # ==============================
-        hoje = datetime.now(FUSO_BR).date()  # CORRIGIDO
+        hoje = datetime.now(FUSO_BR).date()
 
         acessos_negados_hoje = (
             Log.query
@@ -54,7 +54,7 @@ def dashboard():
         )
 
         # ==============================
-        # Usuários por perfil
+        # USUÁRIOS POR PERFIL
         # ==============================
         usuarios_por_perfil = (
             db.session.query(Usuario.perfil, func.count(Usuario.id))
@@ -66,9 +66,9 @@ def dashboard():
         grafico_usuarios_valores = [qtd for _, qtd in usuarios_por_perfil]
 
         # ==============================
-        # Logins últimos 7 dias (BR)
+        # LOGINS ÚLTIMOS 7 DIAS
         # ==============================
-        sete_dias_atras = datetime.now(FUSO_BR) - timedelta(days=7)  # CORRIGIDO
+        sete_dias_atras = datetime.now(FUSO_BR) - timedelta(days=7)
 
         logins_por_dia = (
             db.session.query(func.date(Log.horario), func.count(Log.id))
@@ -83,7 +83,7 @@ def dashboard():
         grafico_login_valores = [qtd for _, qtd in logins_por_dia]
 
         # ==============================
-        # Operações por tipo
+        # OPERACOES POR TIPO
         # ==============================
         operacoes = (
             db.session.query(Log.tipo_operacao, func.count(Log.id))
@@ -95,15 +95,15 @@ def dashboard():
         grafico_operacao_valores = [qtd for _, qtd in operacoes]
 
         # ==============================
-        # Últimos 20 logs (convertidos)
+        # ÚLTIMOS LOGS
         # ==============================
         ultimos_logs = Log.query.order_by(Log.id.desc()).limit(20).all()
 
         for log in ultimos_logs:
-            log.horario_brasil = ajustar_para_brasil(log.horario)  # CORRIGIDO
+            log.horario_brasil = ajustar_para_brasil(log.horario)
 
         # ==============================
-        # Renderização
+        # RENDERIZAÇÃO
         # ==============================
         return render_template(
             "dashboard.html",
@@ -112,28 +112,23 @@ def dashboard():
             total_veiculos=total_veiculos,
             total_equipamentos=total_equipamentos,
             acessos_negados_hoje=acessos_negados_hoje,
+
+            # gráficos iniciais do servidor
             grafico_usuarios_labels=grafico_usuarios_labels,
             grafico_usuarios_valores=grafico_usuarios_valores,
             grafico_login_labels=grafico_login_labels,
             grafico_login_valores=grafico_login_valores,
             grafico_operacao_labels=grafico_operacao_labels,
             grafico_operacao_valores=grafico_operacao_valores,
+
             ultimos_logs=ultimos_logs
         )
 
     except Exception as e:
-        try:
-            from controllers.logs_controller import registrar_log
-            registrar_log("ERRO_DASHBOARD", "Dashboard", f"Falha ao carregar dashboard: {e}")
-        except:
-            pass
-
         current_app.logger.exception("Falha ao renderizar dashboard")
-        return render_template(
-            "404.html",
-            error_code=500,
-            error_message="Erro ao carregar dashboard."
-        ), 500
+        return render_template("404.html",
+                               error_code=500,
+                               error_message="Erro ao carregar dashboard."), 500
 
 
 
@@ -146,9 +141,10 @@ def dashboard():
 @verificar_lockdown
 def dashboard_data(entity):
     try:
-        # --------------------------
+
+        # =====================================================
         # USUÁRIOS
-        # --------------------------
+        # =====================================================
         if entity == "usuarios":
             usuarios_por_perfil = (
                 db.session.query(Usuario.perfil, func.count(Usuario.id))
@@ -156,94 +152,157 @@ def dashboard_data(entity):
                 .all()
             )
 
-            labels = [perfil.value for perfil, _ in usuarios_por_perfil]
-            values = [qtd for _, qtd in usuarios_por_perfil]
+            chart_main = {
+                "type": "pie",
+                "labels": [perfil.value for perfil, _ in usuarios_por_perfil],
+                "values": [qtd for _, qtd in usuarios_por_perfil],
+                "title": "Distribuição por Perfil"
+            }
+
+            # gráfico secundário = logins últimos 7 dias
+            sete_dias_atras = datetime.now(FUSO_BR) - timedelta(days=7)
+            logins = (
+                db.session.query(func.date(Log.horario), func.count(Log.id))
+                .filter(Log.tipo_operacao == "LOGIN_SUCESSO")
+                .filter(Log.horario >= sete_dias_atras)
+                .group_by(func.date(Log.horario))
+                .all()
+            )
+
+            chart2 = {
+                "type": "line",
+                "labels": [str(d) for d, _ in logins],
+                "values": [q for _, q in logins],
+                "title": "Logins - Últimos 7 dias"
+            }
 
             rows = [
                 {
-                    "id": u.id,
-                    "name": u.name,
-                    "email": u.email,
-                    "perfil": u.perfil.value
+                    "ID": u.id,
+                    "Nome": u.name,
+                    "Email": u.email,
+                    "Perfil": u.perfil.value
                 }
-                for u in Usuario.query.order_by(Usuario.id.desc()).limit(50).all()
+                for u in Usuario.query.order_by(Usuario.id.desc()).all()
             ]
 
             return jsonify({
                 "entity": "usuarios",
-                "chart": {"type": "pie", "labels": labels, "values": values},
+                "chart": chart_main,
+                "chart2": chart2,
                 "table": rows
             })
 
-        # --------------------------
+
+        # =====================================================
         # VEÍCULOS
-        # --------------------------
-        elif entity == "veiculos":
-            veiculos_por_situacao = (
+        # =====================================================
+        if entity == "veiculos":
+
+            # gráfico principal = situação
+            por_situacao = (
                 db.session.query(Veiculo.situacao, func.count(Veiculo.id))
                 .group_by(Veiculo.situacao)
                 .all()
             )
+            
 
-            labels = [sit for sit, _ in veiculos_por_situacao]
-            values = [qtd for _, qtd in veiculos_por_situacao]
+            chart_main = {
+                "type": "pie",
+                "labels": [sit for sit, _ in por_situacao],
+                "values": [qtd for _, qtd in por_situacao],
+                "title": "Situação dos Veículos"
+            }
+
+            # gráfico secundário = quantidade por localidade (exemplo)
+            por_local = (
+                db.session.query(Veiculo.local_armazenamento, func.count(Veiculo.id))
+                .group_by(Veiculo.local_armazenamento)
+                .all()
+            )
+
+            chart2 = {
+                "type": "bar",
+                "labels": [(loc if loc else "Não informado") for loc, _ in por_local],
+                "values": [qtd for _, qtd in por_local],
+                "title": "Localização dos Veículos"
+            }
 
             rows = [
                 {
-                    "id": v.id,
-                    "marca": v.marca,
-                    "modelo": v.modelo,
-                    "ano": v.ano_fabricacao,
-                    "situacao": v.situacao
+                    "ID": v.id,
+                    "Marca": v.marca,
+                    "Modelo": v.modelo,
+                    "Ano": v.ano_fabricacao,
+                    "Situação": v.situacao,
+                    "Localização": v.local_armazenamento
                 }
-                for v in Veiculo.query.order_by(Veiculo.id.desc()).limit(50).all()
+                for v in Veiculo.query.order_by(Veiculo.id.desc()).all()
             ]
 
             return jsonify({
                 "entity": "veiculos",
-                "chart": {"type": "bar", "labels": labels, "values": values},
+                "chart": chart_main,
+                "chart2": chart2,
                 "table": rows
             })
 
-        # --------------------------
+
+        # =====================================================
         # EQUIPAMENTOS
-        # --------------------------
-        elif entity == "equipamentos":
-            equipamentos_por_nivel = (
+        # =====================================================
+        if entity == "equipamentos":
+
+            # gráfico principal = nível de perigo
+            por_perigo = (
                 db.session.query(Equipamento.nivel_perigo, func.count(Equipamento.id))
                 .group_by(Equipamento.nivel_perigo)
                 .all()
             )
 
-            labels = [nivel for nivel, _ in equipamentos_por_nivel]
-            values = [qtd for _, qtd in equipamentos_por_nivel]
+            chart_main = {
+                "type": "bar",
+                "labels": [n for n, _ in por_perigo],
+                "values": [qtd for _, qtd in por_perigo],
+                "title": "Nível de Perigo"
+            }
+
+            # gráfico secundário = situação
+            por_situacao = (
+                db.session.query(Equipamento.situacao, func.count(Equipamento.id))
+                .group_by(Equipamento.situacao)
+                .all()
+            )
+
+            chart2 = {
+                "type": "pie",
+                "labels": [s for s, _ in por_situacao],
+                "values": [qtd for _, qtd in por_situacao],
+                "title": "Situação dos Equipamentos"
+            }
 
             rows = [
                 {
-                    "id": e.id,
-                    "nome": e.nome,
-                    "quantidade": e.quantidade,
-                    "situacao": e.situacao,
-                    "nivel_perigo": e.nivel_perigo
+                    "ID": e.id,
+                    "Nome": e.nome,
+                    "Qtd": e.quantidade,
+                    "Situação": e.situacao,
+                    "Perigo": e.nivel_perigo
                 }
-                for e in Equipamento.query.order_by(Equipamento.id.desc()).limit(50).all()
+                for e in Equipamento.query.order_by(Equipamento.id.desc()).all()
             ]
 
             return jsonify({
                 "entity": "equipamentos",
-                "chart": {"type": "bar", "labels": labels, "values": values},
+                "chart": chart_main,
+                "chart2": chart2,
                 "table": rows
             })
 
+
         return jsonify({"error": "entity inválida"}), 400
 
-    except Exception as e:
-        try:
-            from controllers.logs_controller import registrar_log
-            registrar_log("ERRO_DASHBOARD_API", "Dashboard",
-                          f"Erro na rota API /dashboard/data/{entity}: {e}")
-        except:
-            pass
 
-        current_app.logger.exception("Erro na API de dashboard")
-        return jsonify({"error": "Erro interno no servidor"}), 500
+    except Exception as e:
+        current_app.logger.exception(f"Erro na API dashboard: {e}")
+        return jsonify({"error": "Erro interno"}), 500
