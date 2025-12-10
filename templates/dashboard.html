@@ -3,10 +3,11 @@
 
 <h1 class="mb-4">{{ titulo }}</h1>
 
-<!-- CARDS -->
+<!-- ========= CARDS ========= -->
 <div class="row mb-4">
+
     <div class="col-md-3">
-        <div class="card shadow clickable-card" data-entity="usuarios" style="cursor:pointer;">
+        <div class="card shadow clickable-card" data-entity="usuarios">
             <div class="card-body text-center">
                 <h6>Usuários</h6>
                 <p class="fs-3">{{ total_usuarios }}</p>
@@ -15,7 +16,7 @@
     </div>
 
     <div class="col-md-3">
-        <div class="card shadow clickable-card" data-entity="veiculos" style="cursor:pointer;">
+        <div class="card shadow clickable-card" data-entity="veiculos">
             <div class="card-body text-center">
                 <h6>Veículos</h6>
                 <p class="fs-3">{{ total_veiculos }}</p>
@@ -24,7 +25,7 @@
     </div>
 
     <div class="col-md-3">
-        <div class="card shadow clickable-card" data-entity="equipamentos" style="cursor:pointer;">
+        <div class="card shadow clickable-card" data-entity="equipamentos">
             <div class="card-body text-center">
                 <h6>Equipamentos</h6>
                 <p class="fs-3">{{ total_equipamentos }}</p>
@@ -33,29 +34,32 @@
     </div>
 
     <div class="col-md-3">
-        <div class="card shadow" style="cursor:default;">
+        <div class="card shadow">
             <div class="card-body text-center">
                 <h6>Acessos Negados Hoje</h6>
                 <p class="fs-3 text-danger">{{ acessos_negados_hoje }}</p>
             </div>
         </div>
     </div>
+
 </div>
 
-<!-- CONTROLES -->
+<!-- ========= CONTROLES ========= -->
 <div class="mb-3 d-flex gap-2">
     <button id="btnMostrarTudo" class="btn btn-outline-secondary btn-sm">Mostrar Tudo</button>
 </div>
 
-<!-- ÁREA DINÂMICA: gráficos + tabela -->
+<!-- ========= ÁREA DINÂMICA ========= -->
 <div id="area-dinamica">
 
     <div class="row">
 
         <div class="col-md-6 mb-4">
             <div class="card shadow">
-                <div class="card-header">Gráfico Principal</div>
-                <div class="card-body">
+                <div class="card-header">
+                    <h6 id="titulo-grafico-principal" class="m-0">Gráfico Principal</h6>
+                </div>
+                <div class="card-body" style="height: 350px;">
                     <canvas id="grafPrincipal"></canvas>
                 </div>
             </div>
@@ -63,8 +67,10 @@
 
         <div class="col-md-6 mb-4">
             <div class="card shadow">
-                <div class="card-header">Segundo Gráfico</div>
-                <div class="card-body">
+                <div class="card-header">
+                    <h6 id="titulo-grafico-secundario" class="m-0">Segundo Gráfico</h6>
+                </div>
+                <div class="card-body" style="height: 350px;">
                     <canvas id="grafSecundario"></canvas>
                 </div>
             </div>
@@ -73,7 +79,9 @@
     </div>
 
     <div class="card shadow">
-        <div class="card-header">Tabela</div>
+        <div class="card-header">
+            <h6 id="titulo-tabela" class="m-0">Tabela</h6>
+        </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table id="tabela-dinamica" class="table table-striped table-bordered">
@@ -86,168 +94,33 @@
 
 </div>
 
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- Dashboard JS separado -->
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
 <script>
-// helpers
-function safeJson(v){ return v || []; }
-
-// cria chart com configuração básica
-function createChart(ctx, type, labels, values){
-    return new Chart(ctx, {
-        type: type,
-        data: {
-            labels: safeJson(labels),
-            datasets: [{
-                data: safeJson(values),
-                backgroundColor: [
-                    'rgba(54, 162, 235, 0.6)',
-                    'rgba(255, 99, 132, 0.6)',
-                    'rgba(255, 205, 86, 0.6)',
-                    'rgba(75, 192, 192, 0.6)',
-                    'rgba(153, 102, 255, 0.6)',
-                    'rgba(201, 203, 207, 0.6)'
-                ],
-                borderColor: 'rgba(0,0,0,0.05)',
-                borderWidth: 1
-            }]
-        },
-        options: { maintainAspectRatio: false, responsive: true }
-    });
-}
-
-// atualiza dados do chart existente
-function updateChart(chart, type, labels, values){
-    try{
-        chart.config.type = type;
-        chart.data.labels = labels || [];
-        chart.data.datasets[0].data = values || [];
-        chart.update();
-    }catch(e){
-        console.error("Erro ao atualizar chart:", e);
-    }
-}
-
-// renderiza tabela genérica a partir de array de objetos
-function renderTable(headEl, bodyEl, rows){
-    headEl.innerHTML = "";
-    bodyEl.innerHTML = "";
-
-    if(!rows || rows.length === 0){
-        headEl.innerHTML = "<tr><th>Nenhum dado</th></tr>";
-        return;
-    }
-
-    // monta cabeçalho usando chaves do primeiro objeto
-    const keys = Object.keys(rows[0]);
-    const trHead = document.createElement("tr");
-    keys.forEach(k => {
-        const th = document.createElement("th");
-        th.textContent = k.charAt(0).toUpperCase() + k.slice(1);
-        trHead.appendChild(th);
-    });
-    headEl.appendChild(trHead);
-
-    // corpo
-    rows.forEach(r => {
-        const tr = document.createElement("tr");
-        keys.forEach(k => {
-            const td = document.createElement("td");
-            td.innerText = (r[k] === null || r[k] === undefined) ? "" : r[k];
-            tr.appendChild(td);
-        });
-        bodyEl.appendChild(tr);
-    });
-}
-
-// inicializa charts com dados server-side (fallback)
-let grafPrincipalCtx = document.getElementById("grafPrincipal").getContext("2d");
-let grafSecundarioCtx = document.getElementById("grafSecundario").getContext("2d");
-
-// dados iniciais enviados pelo servidor (podem vir vazios)
-const inicialUsuariosLabels = {{ grafico_usuarios_labels|tojson or '[]' }};
-const inicialUsuariosValores = {{ grafico_usuarios_valores|tojson or '[]' }};
-const inicialLoginLabels = {{ grafico_login_labels|tojson or '[]' }};
-const inicialLoginValores = {{ grafico_login_valores|tojson or '[]' }};
-const inicialOperLabels = {{ grafico_operacao_labels|tojson or '[]' }};
-const inicialOperValores = {{ grafico_operacao_valores|tojson or '[]' }};
-
-let chartPrincipal = createChart(grafPrincipalCtx, 'pie', inicialUsuariosLabels, inicialUsuariosValores);
-let chartSecundario = createChart(grafSecundarioCtx, 'line', inicialLoginLabels, inicialLoginValores);
-
-// tabela inicial (últimos logs)
-const tabelaHead = document.getElementById("tabela-head");
-const tabelaBody = document.getElementById("tabela-body");
-const inicialRows = [
-    {% for log in ultimos_logs %}
-    {
-        "ID": "{{ log.id }}",
-        "Data": "{{ log.horario_brasil.strftime('%d/%m/%Y %H:%M') }}",
-        "Usuário": "{{ log.usuario_nome }}",
-        "Operação": "{{ log.tipo_operacao }}",
-        "Descrição": "{{ log.descricao|replace('\n',' ') }}"
-    },
-    {% endfor %}
-];
-renderTable(tabelaHead, tabelaBody, inicialRows);
-
-// função que pede dados ao servidor para a entidade selecionada
-async function fetchEntity(entity){
-    try{
-        const res = await fetch(`/dashboard/data/${entity}`);
-        if(!res.ok) throw new Error("Erro na requisição");
-        const j = await res.json();
-        return j;
-    }catch(e){
-        console.error("fetchEntity error:", e);
-        return null;
-    }
-}
-
-// atualiza área com base na entidade escolhida
-async function showEntity(entity){
-    const data = await fetchEntity(entity);
-    if(!data) return;
-
-    // atualizar charts
-    const ch = data.chart || {};
-    const type = ch.type || 'bar';
-    const labels = ch.labels || [];
-    const values = ch.values || [];
-
-    updateChart(chartPrincipal, type, labels, values);
-
-    // secundário: mantemos o gráfico de operações como secundário quando for usuários
-    if(entity === 'usuarios'){
-        updateChart(chartSecundario, 'line', inicialLoginLabels, inicialLoginValores);
-    }else{
-        // secundário: sumário simples (tipo: operação) - vamos tentar obter outro chart via API no futuro
-        updateChart(chartSecundario, 'bar', inicialOperLabels, inicialOperValores);
-    }
-
-    // tabela
-    const rows = data.table || [];
-    renderTable(tabelaHead, tabelaBody, rows);
-}
-
-// adiciona eventos aos cards
-document.querySelectorAll('.clickable-card').forEach(card=>{
-    card.addEventListener('click', ()=> {
-        const ent = card.dataset.entity;
-        // destaque visual simples
-        document.querySelectorAll('.clickable-card').forEach(c=>c.classList.remove('border-primary'));
-        card.classList.add('border-primary');
-        showEntity(ent);
-    });
-});
-
-// mostrar tudo: volta ao estado inicial (gráficos do servidor)
-document.getElementById('btnMostrarTudo').addEventListener('click', ()=>{
-    updateChart(chartPrincipal, 'pie', inicialUsuariosLabels, inicialUsuariosValores);
-    updateChart(chartSecundario, 'line', inicialLoginLabels, inicialLoginValores);
-
-    renderTable(tabelaHead, tabelaBody, inicialRows);
-});
+    // Passar dados iniciais do backend para o JS (bootstrap)
+    window.dashboardData = {
+        usuariosLabels: {{ grafico_usuarios_labels|tojson }},
+        usuariosValores: {{ grafico_usuarios_valores|tojson }},
+        loginLabels: {{ grafico_login_labels|tojson }},
+        loginValores: {{ grafico_login_valores|tojson }},
+        operLabels: {{ grafico_operacao_labels|tojson }},
+        operValores: {{ grafico_operacao_valores|tojson }},
+        logsIniciais: [
+            {% for log in ultimos_logs %}
+            {
+                "ID": "{{ log.id }}",
+                "Data": "{{ log.horario_brasil.strftime('%d/%m/%Y %H:%M') }}",
+                "Usuário": "{{ log.usuario_nome }}",
+                "Operação": "{{ log.tipo_operacao }}",
+                "Descrição": "{{ log.descricao|replace('\n',' ') }}"
+            },
+            {% endfor %}
+        ]
+    };
 </script>
 
 {% endblock %}
