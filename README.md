@@ -218,8 +218,8 @@ Cada módulo inclui:
 
 ## 1️⃣ Clonar o repositório
  ```bash
-    git clone https://github.com/seu-usuario/wayncorp-flask.git
-    cd wayncorp-flask
+    git clone https://github.com/AlmirNeto87/Projeto-Final.git
+    cd Projeto-Final
  ```
 ## 2️⃣ Criar ambiente virtual (opcional, recomendado)
 ```bash
