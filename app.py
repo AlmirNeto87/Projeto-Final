@@ -9,6 +9,9 @@ from controllers.auth_controller import auth_bp
 from controllers.logs_controller import logs_bp
 from controllers.dashboard_controller import dashboard_bp
 from controllers.chat_controller import chat_bp
+from controllers.chatbot_controller import chatbot_bp
+
+
 
 # Mocks
 from mock.usuarios_mock import criar_dados_mock_usuarios
@@ -38,7 +41,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(logs_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(chat_bp)
-
+app.register_blueprint(chatbot_bp)
 # Página inicial interna
 app.add_url_rule("/home", "home", usuario_controller.home)
 
