@@ -9,9 +9,15 @@ from config import db
 from sqlalchemy import func
 from datetime import datetime
 
-genai.configure(api_key="AIzaSyA8Fx2ohiz8-5kCm36nktowKEJfDNxUSSw")
+genai.configure(api_key="")
 
-model = genai.GenerativeModel("gemini-pro")
+model = genai.GenerativeModel("models/gemini-1.5-flash")
+
+print("Modelos disponíveis para você:")
+for m in genai.list_models():
+    if 'generateContent' in m.supported_generation_methods:
+        print(f"- {m.name}")
+
 # =========================================
 # 🔒 FUNÇÕES SEGURAS (READ ONLY)
 # =========================================
@@ -74,7 +80,14 @@ def interpretar_com_ia(pergunta):
     Pergunta: {pergunta}
     """
 
-    response = model.generate_content(prompt)
+    response = model.generate_content(
+        prompt,
+        generation_config=genai.types.GenerationConfig(
+            candidate_count=1,
+            stop_sequences=['\n'], # Para ela parar logo após a primeira linha
+            temperature=0.0,       # Deixa a IA menos criativa e mais precisa
+        )
+    )
 
     return response.text.strip()
 
