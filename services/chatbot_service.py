@@ -1,14 +1,20 @@
+import google.generativeai as genai
+import os
+
 from models.usuario_model import Usuario
 from models.veiculo_model import Veiculo
 from models.equipamento_model import Equipamento
 from models.log_model import Log
 from config import db
 from sqlalchemy import func
-from datetime import datetime, timedelta
+from datetime import datetime
 
-# ===============================
+genai.configure(api_key="AIzaSyA8Fx2ohiz8-5kCm36nktowKEJfDNxUSSw")
+
+model = genai.GenerativeModel("gemini-pro")
+# =========================================
 # 🔒 FUNÇÕES SEGURAS (READ ONLY)
-# ===============================
+# =========================================
 
 def total_usuarios():
     return Usuario.query.count()
@@ -34,32 +40,59 @@ def equipamentos_alto_risco():
     return Equipamento.query.filter_by(nivel_perigo="Alto").count()
 
 
-# ===============================
-# 🤖 IA (simples + segura)
-# ===============================
+# =========================================
+# 🤖 MAPA DE FUNÇÕES DISPONÍVEIS
+# =========================================
+
+FUNCOES = {
+    "total_usuarios": total_usuarios,
+    "usuarios_por_perfil": usuarios_por_perfil,
+    "veiculos_ativos": veiculos_ativos,
+    "acessos_negados_hoje": acessos_negados_hoje,
+    "equipamentos_alto_risco": equipamentos_alto_risco
+}
+
+
+# =========================================
+# 🤖 IA — INTERPRETAÇÃO NATURAL
+# =========================================
+
+def interpretar_com_ia(pergunta):
+    prompt = f"""
+    Você é um assistente de sistema interno.
+
+    Escolha qual função deve ser usada:
+
+    - total_usuarios
+    - usuarios_por_perfil
+    - veiculos_ativos
+    - acessos_negados_hoje
+    - equipamentos_alto_risco
+
+    Responda SOMENTE com o nome da função.
+
+    Pergunta: {pergunta}
+    """
+
+    response = model.generate_content(prompt)
+
+    return response.text.strip()
+
+
+# =========================================
+# 🤖 RESPOSTA FINAL
+# =========================================
 
 def responder_pergunta(pergunta):
-    p = pergunta.lower()
-
     try:
-        if "quantos usuarios" in p:
-            return f"Total de usuários: {total_usuarios()}"
+        func_name = interpretar_com_ia(pergunta)
 
-        elif "perfil" in p:
-            dados = usuarios_por_perfil()
-            return f"Usuários por perfil: {dados}"
+        if func_name in FUNCOES:
+            resultado = FUNCOES[func_name]()
 
-        elif "veiculos ativos" in p:
-            return f"Veículos ativos: {veiculos_ativos()}"
+            return f"Resultado: {resultado}"
 
-        elif "acessos negados" in p:
-            return f"Acessos negados hoje: {acessos_negados_hoje()}"
-
-        elif "alto risco" in p:
-            return f"Equipamentos de alto risco: {equipamentos_alto_risco()}"
-
-        else:
-            return "Não entendi sua pergunta. Tente algo como: 'quantos usuários existem?'"
+        return "Não consegui entender sua pergunta."
 
     except Exception as e:
-        return f"Erro ao processar pergunta: {str(e)}"
+        return f"Erro na IA: {str(e)}"
